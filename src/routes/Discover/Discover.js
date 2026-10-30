@@ -22,6 +22,7 @@ const { default: FiltersSheet } = require('./FiltersSheet');
 const { default: Guide } = require('./Guide');
 const { default: DaySelector } = require('./Guide/DaySelector');
 const { default: useLiveTvGuide } = require('./useLiveTvGuide');
+const { CustomFilters, useCustomFilters } = require('./CustomFilters');
 const styles = require('./styles');
 
 const SCROLL_TO_BOTTOM_THRESHOLD = 400;
@@ -49,8 +50,13 @@ const Discover = () => {
     const core = useCore();
     const { navigateWithOrigin } = useNavigateWithOrigin();
     const routeActive = useRouteActive();
-    const [discover, loadNextPage] = useDiscover(urlParams, catalogQueryParams);
-    const [selectInputs, hasNextPage] = useSelectableInputs(discover);
+    const [coreDiscover, coreLoadNextPage] = useDiscover(urlParams, catalogQueryParams);
+    const [selectInputs, coreHasNextPage] = useSelectableInputs(coreDiscover);
+    // Filtres cumulables : quand ils sont actifs, la liste vient du moteur local au lieu de l'addon.
+    const customFilters = useCustomFilters(coreDiscover);
+    const { discover } = customFilters;
+    const loadNextPage = customFilters.active ? customFilters.loadNextPage : coreLoadNextPage;
+    const hasNextPage = customFilters.active ? customFilters.hasNextPage : coreHasNextPage;
     const [filtersOpen, openFilters, closeFilters] = useBinaryState(false);
     const selectedTypeOption = selectInputs[0].options.find(({ value }) => value === selectInputs[0].value);
     const selectedCatalogOption = selectInputs[1].options.find(({ value }) => value === selectInputs[1].value);
@@ -384,6 +390,7 @@ const Discover = () => {
                                 null
                         }
                     </div>
+                    {isEpgLayout ? null : <CustomFilters {...customFilters} />}
                     {
                         discover.catalog !== null && !discover.catalog.installed ?
                             <div className={styles['missing-addon-warning-container']}>
