@@ -10,6 +10,13 @@ const VOTES = [['', 'Tous'], ['1000', '1 000+'], ['10000', '10 000+'], ['50000',
 const SORTS = [['rating', 'Meilleure note'], ['votes', 'Popularité'], ['year', 'Plus récents'], ['year_asc', 'Plus anciens']];
 const NEXT_GENRE_STATE = { undefined: 'in', in: 'out', out: undefined };
 
+// Comme CredentialsTextInput : les flèches règlent le champ au lieu de déplacer le focus (navigation spatiale).
+const keepArrowsInInputs = (event) => {
+    if (['INPUT', 'SELECT'].includes(event.target.tagName) && event.key.startsWith('Arrow')) {
+        event.nativeEvent.spatialNavigationPrevented = true;
+    }
+};
+
 const useGenres = () => {
     const [genres, setGenres] = React.useState([]);
     React.useEffect(() => {
@@ -59,7 +66,7 @@ const CustomFilters = ({ supported, active, filters, setFilters, reset }) => {
                 </div>
                 {active ? <button type={'button'} className={styles['reset']} onClick={reset}>Réinitialiser</button> : null}
             </div>
-            {open ? <div className={styles['panel']}>
+            {open ? <div className={styles['panel']} onKeyDown={keepArrowsInInputs}>
                 <fieldset className={styles['field']}>
                     <legend className={styles['label']}>Note IMDb : <strong>{rating.toFixed(1)} à {ratingMax.toFixed(1)}</strong></legend>
                     <input type={'range'} className={styles['slider']} aria-label={'Note minimum'} min={0} max={10} step={0.5} value={rating} onChange={(e) => set('rating_min')(e.target.value === '0' ? '' : e.target.value)} />
