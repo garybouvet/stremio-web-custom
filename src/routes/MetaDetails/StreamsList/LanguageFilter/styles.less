@@ -14,6 +14,16 @@
         color: inherit;
     }
 
+    // Listes natives : sans thème sombre, Windows dessine un fond blanc sous un texte blanc.
+    select {
+        color-scheme: dark;
+    }
+
+    option {
+        color: var(--primary-foreground-color);
+        background-color: var(--modal-background-color);
+    }
+
     select:focus-visible, input:focus-visible {
         outline: var(--focus-outline-size) solid var(--primary-foreground-color);
     }
