@@ -11,7 +11,7 @@ const styles = require('./styles');
 // Interface volontairement en français seul : textes regroupés ici plutôt que dans stremio-translations.
 const TEXTS = {
     all: 'Toutes', to: 'à', catalog: 'Ce catalogue', everything: 'Tout IMDb', reset: 'Réinitialiser',
-    rating: 'Note IMDb :', votes: 'Nombre de votes', sort: 'Tri',
+    rating: 'Note IMDb', votes: 'Nombre de votes', sort: 'Tri', countryNot: 'Sans ce pays',
     genres: 'Genres (un clic : inclure, deux : exclure)', genresAll: 'tous à la fois', genresAny: 'au moins un',
 };
 const VOTES = [['', 'Tous'], ['1000', '1 000+'], ['10000', '10 000+'], ['50000', '50 000+'], ['100000', '100 000+'], ['500000', '500 000+']];
@@ -35,6 +35,18 @@ const displayName = (names, code) => {
         return code;
     }
 };
+
+// Résumé affiché dans la barre quand le panneau est replié : on garde la place pour les films.
+const summary = (f) => [
+    (f.rating_min || f.rating_max) && `Note ${f.rating_min || 0} à ${f.rating_max || 10}`,
+    f.votes_min && `${Number(f.votes_min).toLocaleString('fr')}+ votes`,
+    (f.year_min || f.year_max) && `${f.year_min || '…'} à ${f.year_max || '…'}`,
+    f.language && displayName(LANGUAGE_NAMES, f.language),
+    f.country && displayName(COUNTRY_NAMES, f.country),
+    f.country_not && `sans ${displayName(COUNTRY_NAMES, f.country_not)}`,
+    (f.runtime_min || f.runtime_max) && `${f.runtime_min || 0} à ${f.runtime_max || '…'} min`,
+    ...Object.keys(f.genres).map((g) => `${f.genres[g] === 'out' ? '−' : '+'}${g}`),
+].filter(Boolean).join(' · ');
 
 const useOptions = () => {
     const [options, setOptions] = React.useState(EMPTY_OPTIONS);
@@ -82,8 +94,6 @@ const CustomFilters = ({ supported, active, filters, setFilters, reset }) => {
         return { ...f, genres: next };
     });
     if (!supported) return null;
-    const rating = filters.rating_min === '' ? 0 : Number(filters.rating_min);
-    const ratingMax = filters.rating_max === '' ? 10 : Number(filters.rating_max);
 
     return (
         <div className={styles['custom-filters']}>
@@ -97,13 +107,10 @@ const CustomFilters = ({ supported, active, filters, setFilters, reset }) => {
                     <button type={'button'} aria-pressed={filters.source === 'all'} onClick={() => set('source')('all')}>{TEXTS.everything}</button>
                 </div>
                 {active ? <button type={'button'} className={styles['reset']} onClick={reset}>{TEXTS.reset}</button> : null}
+                {active && !open ? <span className={styles['summary']}>{summary(filters)}</span> : null}
             </div>
             {open ? <div className={styles['panel']} onKeyDown={keepArrowsInInputs}>
-                <fieldset className={styles['field']}>
-                    <legend className={styles['label']}>{TEXTS.rating} <strong>{`${rating.toFixed(1)} ${TEXTS.to} ${ratingMax.toFixed(1)}`}</strong></legend>
-                    <input type={'range'} className={styles['slider']} aria-label={'Note minimum'} min={0} max={10} step={0.5} value={rating} onChange={(e) => set('rating_min')(e.target.value === '0' ? '' : e.target.value)} />
-                    <input type={'range'} className={styles['slider']} aria-label={'Note maximum'} min={0} max={10} step={0.5} value={ratingMax} onChange={(e) => set('rating_max')(e.target.value === '10' ? '' : e.target.value)} />
-                </fieldset>
+                <Range label={TEXTS.rating} min={0} max={10} step={0.5} from={filters.rating_min} to={filters.rating_max} onFrom={set('rating_min')} onTo={set('rating_max')} />
                 <fieldset className={styles['field']}>
                     <legend className={styles['label']}>{TEXTS.votes}</legend>
                     <select value={filters.votes_min} onChange={(e) => set('votes_min')(e.target.value)}>
@@ -113,6 +120,7 @@ const CustomFilters = ({ supported, active, filters, setFilters, reset }) => {
                 <Range label={'Année'} min={1900} max={new Date().getFullYear()} step={1} from={filters.year_min} to={filters.year_max} onFrom={set('year_min')} onTo={set('year_max')} />
                 <CodeSelect label={'Langue originale'} codes={languages} names={LANGUAGE_NAMES} value={filters.language} onChange={set('language')} />
                 <CodeSelect label={'Pays'} codes={countries} names={COUNTRY_NAMES} value={filters.country} onChange={set('country')} />
+                <CodeSelect label={TEXTS.countryNot} codes={countries} names={COUNTRY_NAMES} value={filters.country_not} onChange={set('country_not')} />
                 <Range label={'Durée'} unit={'min'} min={0} max={300} step={5} from={filters.runtime_min} to={filters.runtime_max} onFrom={set('runtime_min')} onTo={set('runtime_max')} />
                 {filters.source === 'all' ? <fieldset className={styles['field']}>
                     <legend className={styles['label']}>{TEXTS.sort}</legend>
@@ -175,6 +183,7 @@ CustomFilters.propTypes = {
         runtime_max: PropTypes.string,
         language: PropTypes.string,
         country: PropTypes.string,
+        country_not: PropTypes.string,
         genres: PropTypes.objectOf(PropTypes.string),
         genres_mode: PropTypes.string,
         sort: PropTypes.string,

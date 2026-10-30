@@ -2,7 +2,7 @@
 
 .custom-filters {
     flex: none;
-    padding: 0 1.5rem 1rem;
+    padding: 0 1.5rem 0.75rem;
     color: var(--primary-foreground-color);
 
     button, select, input {
@@ -32,15 +32,15 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 1rem;
+        gap: 0.75rem;
     }
 
     .toggle {
         display: flex;
         align-items: center;
-        gap: 0.6rem;
-        height: 2.6rem;
-        padding: 0 1rem;
+        gap: 0.5rem;
+        height: 2.4rem;
+        padding: 0 0.9rem;
         border: none;
         border-radius: var(--border-radius);
         background-color: var(--overlay-color);
@@ -63,8 +63,8 @@
         overflow: hidden;
 
         button {
-            height: 2.6rem;
-            padding: 0 1rem;
+            height: 2.4rem;
+            padding: 0 0.9rem;
             border: none;
             background: none;
             opacity: 0.6;
@@ -87,12 +87,23 @@
         }
     }
 
+    .summary {
+        flex: 1 1 0;
+        min-width: 0;
+        overflow: hidden;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        opacity: 0.7;
+    }
+
+    // Compact : la grille des films doit rester visible sous le panneau ouvert.
     .panel {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-        gap: 1.25rem 2rem;
-        margin-top: 1rem;
-        padding: 1.25rem;
+        grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+        gap: 0.7rem 1.25rem;
+        margin-top: 0.6rem;
+        padding: 0.8rem 1rem;
         border-radius: var(--border-radius);
         background-color: var(--overlay-color);
     }
@@ -104,8 +115,8 @@
         border: none;
 
         select, input[type='number'] {
-            height: 2.4rem;
-            padding: 0 0.6rem;
+            height: 2.1rem;
+            padding: 0 0.5rem;
             border: none;
             border-radius: var(--border-radius);
             background-color: var(--secondary-background-color);
@@ -120,33 +131,22 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 0.6rem;
-        margin-bottom: 0.6rem;
+        gap: 0.5rem;
+        margin-bottom: 0.3rem;
         padding: 0;
-        font-size: 0.9rem;
-        opacity: 0.8;
-
-        strong {
-            font-weight: 600;
-        }
-    }
-
-    .slider {
-        display: block;
-        width: 100%;
-        height: 1.6rem;
-        margin: 0;
-        appearance: auto;
-        accent-color: var(--primary-accent-color);
+        font-size: 0.8rem;
+        opacity: 0.75;
     }
 
     .range {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
 
         input {
-            width: 5.5rem;
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: 5.5rem;
             font-variant-numeric: tabular-nums;
         }
 
@@ -160,21 +160,22 @@
 
         .mode {
             width: auto;
-            height: 2rem;
+            height: 1.8rem;
         }
     }
 
     .chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.35rem;
     }
 
     .chip {
-        height: 2.2rem;
-        padding: 0 0.9rem;
+        height: 1.9rem;
+        padding: 0 0.7rem;
         border: 1px solid transparent;
-        border-radius: 1.1rem;
+        border-radius: 0.95rem;
+        font-size: 0.85rem;
         background-color: var(--secondary-background-color);
         transition: background-color 0.15s ease-out;
 
