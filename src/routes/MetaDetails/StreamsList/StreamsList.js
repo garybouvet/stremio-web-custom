@@ -204,9 +204,8 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                                             deepLinks={stream.deepLinks}
                                             externalPlayerCallbackCanMarkWatched={externalPlayerCallbackCanMarkWatched}
                                             onClick={stream.onClick}
-                                        >
-                                            {stream.languageBadge ? <span className={badgeClassName}>{stream.languageBadge}</span> : null}
-                                        </Stream>
+                                            badge={stream.languageBadge ? <span className={badgeClassName}>{stream.languageBadge}</span> : null}
+                                        />
                                     ))}
                                     {
                                         showInstallAddonsButton ?

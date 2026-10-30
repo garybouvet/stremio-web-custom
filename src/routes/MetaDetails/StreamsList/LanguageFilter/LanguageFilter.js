@@ -26,7 +26,7 @@ const load = () => {
 const weight = (code) => PREFERRED.includes(code) ? PREFERRED.indexOf(code) : PREFERRED.length;
 const languageOptions = (codes) => [...codes]
     .sort((a, b) => (weight(a) - weight(b)) || NAMES.of(a).localeCompare(NAMES.of(b), 'fr'))
-    .map((code) => [code, NAMES.of(code)]);
+    .map((code) => [code, NAMES.of(code).replace(/^./, (c) => c.toUpperCase())]);
 
 // Comme CredentialsTextInput : les flèches règlent le champ au lieu de déplacer le focus (navigation spatiale).
 const keepArrowsInInputs = (event) => {
