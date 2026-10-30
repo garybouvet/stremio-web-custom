@@ -47,9 +47,30 @@ const detect = ({ name = '', description = '' } = {}) => {
     return { audio, subs, flags, multi: MULTI.test(text), subsHint: SUBS_HINT.test(text) };
 };
 
+// Pistes réelles lues par ffprobe (serveur de streaming, /hlsv2/probe) : langue ISO 639-2, ou titre de piste.
+const ISO3 = {
+    fre: 'fr', fra: 'fr', eng: 'en', spa: 'es', ita: 'it', ger: 'de', deu: 'de', por: 'pt', jpn: 'ja', kor: 'ko',
+    chi: 'zh', zho: 'zh', rus: 'ru', ukr: 'uk', pol: 'pl', dut: 'nl', nld: 'nl', hin: 'hi', tur: 'tr', ara: 'ar',
+    swe: 'sv', nor: 'no', nob: 'no', dan: 'da', fin: 'fi', cze: 'cs', ces: 'cs', hun: 'hu', gre: 'el', ell: 'el',
+    heb: 'he', tha: 'th', vie: 'vi',
+};
+const trackLang = ({ language, title }) => {
+    if (ISO3[language]) return ISO3[language];
+    if (typeof language === 'string' && language.length === 2) return language;
+    if (/french|fran[cç]ais|\bvf[fqi2]?\b|truefrench/i.test(title || '')) return 'fr';
+    if (/english|anglais/i.test(title || '')) return 'en';
+    return null;
+};
+
+const fromProbe = (tracks) => {
+    const pick = (kind) => new Set(tracks.filter((t) => t.track === kind).map(trackLang).filter(Boolean));
+    return { audio: pick('audio'), subs: pick('subtitle'), flags: new Set(), multi: false, subsHint: false, verified: true };
+};
+
 // 'sure' | 'maybe' | null pour une langue audio donnée.
 const audioMatch = (d, lang) => {
     if (d.audio.has(lang)) return 'sure';
+    if (d.verified) return null;
     // Sortie qui annonce des sous-titres : ses drapeaux sont ceux des sous-titres, pas de l'audio.
     if (d.multi || (d.flags.has(lang) && !d.subs.has(lang) && !d.subsHint)) return 'maybe';
     return null;
@@ -57,12 +78,17 @@ const audioMatch = (d, lang) => {
 
 const subsMatch = (d, lang) => {
     if (d.subs.has(lang)) return 'sure';
+    if (d.verified) return null;
     if (d.flags.has(lang) && !d.audio.has(lang)) return 'maybe';
     return null;
 };
 
 // Étiquette courte affichée sur le lien, pour la langue suivie (fr par défaut).
 const badge = (d, lang = 'fr') => {
+    if (d.verified) {
+        const audio = [...d.audio].map((l) => l.toUpperCase()).join(' ') || '?';
+        return `✓ ${audio}${d.subs.has(lang) ? ` · ST ${lang.toUpperCase()}` : ''}`;
+    }
     if (d.subs.has(lang) && !d.audio.has(lang)) return lang === 'fr' ? 'VOSTFR' : `ST ${lang.toUpperCase()}`;
     if (d.audio.has(lang)) return lang === 'fr' ? 'VF' : lang.toUpperCase();
     if (d.multi) return 'MULTi';
@@ -70,4 +96,4 @@ const badge = (d, lang = 'fr') => {
     return null;
 };
 
-module.exports = { detect, audioMatch, subsMatch, badge };
+module.exports = { detect, fromProbe, audioMatch, subsMatch, badge };

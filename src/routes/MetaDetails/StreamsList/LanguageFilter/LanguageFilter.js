@@ -1,14 +1,18 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
-// Filtre des liens par langue audio et sous-titres, d'après le texte de chaque lien (voir streamLanguages).
+// Filtre des liens par langue audio et sous-titres : pistes réelles quand le lien a été vérifié (useTrackProbe),
+// sinon d'après le texte du lien (streamLanguages).
 
 const React = require('react');
 const PropTypes = require('prop-types');
-const { detect, audioMatch, subsMatch, badge } = require('./streamLanguages');
+const classnames = require('classnames');
+const { detect, fromProbe, audioMatch, subsMatch, badge } = require('./streamLanguages');
+const { useTrackProbe } = require('./useTrackProbe');
 const styles = require('./styles');
 
 // Interface volontairement en français seul : textes regroupés ici plutôt que dans stremio-translations.
-const TEXTS = { audio: 'Audio', subs: 'Sous-titres', all: 'Toutes', allSubs: 'Tous', maybe: 'Inclure MULTi et incertains', links: 'liens' };
+const TEXTS = { audio: 'Audio', subs: 'Sous-titres', all: 'Toutes', allSubs: 'Tous', maybe: 'Inclure MULTi et incertains', links: 'liens',
+    verify: 'Vérifier les pistes', verifying: 'Vérification', verifyHelp: 'Lit les vraies pistes audio et sous-titres des liens Real-Debrid en cache affichés (15 au plus). Comme une lecture, chaque torrent vérifié s’ajoute à ta liste Real-Debrid.' };
 const STORAGE_KEY = 'stream_language_filter';
 const DEFAULTS = { audio: '', subs: '', includeMaybe: true };
 const RANK = { sure: 0, maybe: 1 };
@@ -45,7 +49,12 @@ const useLanguageFilter = (streams) => {
         }
     }, [filter]);
 
-    const detected = React.useMemo(() => streams.map((stream) => ({ stream, d: detect(stream) })), [streams]);
+    const probe = useTrackProbe();
+    const { tracksOf } = probe;
+    const detected = React.useMemo(() => streams.map((stream) => {
+        const tracks = tracksOf(stream);
+        return { stream, d: tracks ? fromProbe(tracks) : detect(stream) };
+    }), [streams, tracksOf]);
     const result = React.useMemo(() => {
         const allowed = filter.includeMaybe ? ['sure', 'maybe'] : ['sure'];
         const kept = detected
@@ -55,10 +64,14 @@ const useLanguageFilter = (streams) => {
                 return { stream, d, rank: Math.max(RANK[a] ?? 9, RANK[s] ?? 9) };
             })
             .filter(({ rank }) => allowed.some((level) => RANK[level] === rank))
-            // Sûrs d'abord, puis incertains (MULTi, drapeaux) ; l'ordre de l'addon est gardé à l'intérieur.
-            .sort((x, y) => x.rank - y.rank);
+            // Vérifiés et sûrs d'abord, puis incertains (MULTi, drapeaux) ; l'ordre de l'addon est gardé à l'intérieur.
+            .sort((x, y) => (x.rank - y.rank) || (Number(!x.d.verified) - Number(!y.d.verified)));
         const lang = filter.audio || filter.subs || 'fr';
-        return kept.map(({ stream, d }) => ({ ...stream, languageBadge: badge(d, lang) }));
+        return kept.map(({ stream, d }) => {
+            const text = badge(d, lang);
+            const element = text ? <span className={classnames(styles['badge'], { [styles['verified']]: d.verified })}>{text}</span> : null;
+            return { ...stream, languageBadge: element };
+        });
     }, [detected, filter]);
 
     const audioCodes = new Set(['fr', 'en']);
@@ -76,10 +89,13 @@ const useLanguageFilter = (streams) => {
         audioOptions: languageOptions(audioCodes),
         subsOptions: languageOptions(subsCodes),
         active: filter.audio !== '' || filter.subs !== '',
+        verify: () => probe.verify(result),
+        verifiable: probe.pendingCount(result),
+        verifying: probe.running,
     };
 };
 
-const LanguageFilter = ({ streams, total, filter, setFilter, audioOptions, subsOptions, active }) => {
+const LanguageFilter = ({ streams, total, filter, setFilter, audioOptions, subsOptions, active, verify, verifiable, verifying }) => {
     const set = (key) => (event) => setFilter((f) => ({ ...f, [key]: event.target.type === 'checkbox' ? event.target.checked : event.target.value }));
     return (
         <div className={styles['language-filter']} onKeyDown={keepArrowsInInputs}>
@@ -101,6 +117,9 @@ const LanguageFilter = ({ streams, total, filter, setFilter, audioOptions, subsO
                 <input type={'checkbox'} checked={filter.includeMaybe} onChange={set('includeMaybe')} />
                 <span>{TEXTS.maybe}</span>
             </label> : null}
+            {verifying || verifiable > 0 ? <button type={'button'} className={styles['verify']} title={TEXTS.verifyHelp} disabled={!!verifying} onClick={verify}>
+                {verifying ? `${TEXTS.verifying} ${verifying.done} / ${verifying.total}…` : `${TEXTS.verify} (${verifiable})`}
+            </button> : null}
             {active ? <span className={styles['count']}>{`${streams.length} / ${total} ${TEXTS.links}`}</span> : null}
         </div>
     );
@@ -118,6 +137,9 @@ LanguageFilter.propTypes = {
     audioOptions: PropTypes.array,
     subsOptions: PropTypes.array,
     active: PropTypes.bool,
+    verify: PropTypes.func,
+    verifiable: PropTypes.number,
+    verifying: PropTypes.shape({ done: PropTypes.number, total: PropTypes.number }),
 };
 
-module.exports = { LanguageFilter, useLanguageFilter, badgeClassName: styles['badge'], badgeHostClassName: styles['badge-host'] };
+module.exports = { LanguageFilter, useLanguageFilter, badgeHostClassName: styles['badge-host'] };

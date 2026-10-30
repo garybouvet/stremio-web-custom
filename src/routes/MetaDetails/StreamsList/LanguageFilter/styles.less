@@ -55,6 +55,31 @@
         }
     }
 
+    .verify {
+        height: 2.4rem;
+        padding: 0 0.9rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font: inherit;
+        font-size: 0.85rem;
+        color: var(--primary-foreground-color);
+        background-color: var(--overlay-color);
+        cursor: pointer;
+
+        &:hover:not(:disabled) {
+            background-color: var(--secondary-background-color);
+        }
+
+        &:disabled {
+            cursor: progress;
+            opacity: 0.7;
+        }
+
+        &:focus-visible {
+            outline: var(--focus-outline-size) solid var(--primary-foreground-color);
+        }
+    }
+
     .count {
         margin-left: auto;
         font-size: 0.85rem;
@@ -78,4 +103,8 @@
     color: var(--primary-foreground-color);
     background-color: var(--primary-accent-color);
     pointer-events: none;
+
+    &.verified {
+        background-color: var(--secondary-accent-color);
+    }
 }
