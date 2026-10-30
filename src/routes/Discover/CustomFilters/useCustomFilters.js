@@ -1,3 +1,5 @@
+// Copyright (C) 2017-2026 Smart code 203358507
+
 // Filtres cumulables servis par le moteur local (stremio_custom/engine), même origine que cette interface.
 
 const React = require('react');
