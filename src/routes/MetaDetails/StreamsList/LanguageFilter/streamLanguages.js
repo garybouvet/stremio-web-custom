@@ -15,7 +15,8 @@ const NAMES = {
     hindi: 'hi', turkish: 'tr', arabic: 'ar', swedish: 'sv', norwegian: 'no', danish: 'da', finnish: 'fi',
     czech: 'cs', hungarian: 'hu', greek: 'el', hebrew: 'he', thai: 'th', vietnamese: 'vi',
 };
-const SUBS_FR = /\b(VOSTFR|VOST|SUBFRENCH|STFR|ST[ ._-]FR|SUBS?[ ._:-]*(FR|FRE|FRENCH)|FRENCH[ ._-]?SUBS?)\b/i;
+// « Sub Eng-Arabic-French » : liste de langues après « Sub » = sous-titres, pas audio.
+const SUBS_FR = /\b(VOSTFR|VOST|SUBFRENCH|STFR|ST[ ._-]FR|SUB(?:S|TITLES?)?[ ._:-]+(?:[a-z]{2,}[ ._,/-]+){0,6}?(?:FR|FRE|FRENCH)|FRENCH[ ._-]?SUBS?)\b/i;
 const AUDIO_FR = /\b(TRUEFRENCH|FRENCH|VFF|VFQ|VFI|VF2|VF|VOF|FRA|FRE|FR)\b/i;
 const AUDIO_EN = /\b(ENG|ENGLISH|EN|VO)\b/i;
 const SUBS_HINT = /\bsubs?\b|subtitles?|napisy|multi[ ._-]?subs|\bmsubs\b/i;

@@ -55,6 +55,13 @@ describe('streamLanguages', () => {
         expect(subsMatch(d, 'fr')).toBe('maybe');
     });
 
+    test('liste de langues après « Sub » : sous-titres, pas audio', () => {
+        const d = detect(torrentio('The Shawshank Redemption 1994 BRRip Sub Eng-Arabic-French-Swedish\n🇬🇧 / 🇫🇷'));
+        expect(audioMatch(d, 'fr')).toBe(null);
+        expect(subsMatch(d, 'fr')).toBe('sure');
+        expect(audioMatch(detect(torrentio('Movie 2020 1080p French Eng Subs')), 'fr')).toBe('sure');
+    });
+
     test('pistes réelles : priment sur le titre', () => {
         // Résultat réel de /hlsv2/probe sur « Les evades 1994 - 1080p FR EN » (2026-10-30).
         const d = fromProbe([
