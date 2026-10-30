@@ -48,6 +48,8 @@ const toMetaItem = (m) => ({
         metaDetailsStreams: m.type === 'movie' ? `#/detail/${m.type}/${encodeURIComponent(m.id)}/${encodeURIComponent(m.id)}` : null,
     },
     links: [{ name: m.imdbRating, category: 'imdb', url: `https://www.imdb.com/title/${m.id}/` }],
+    // Bandes-annonces brutes de l'addon : l'interface attend celles préparées par stremio-core (avec deepLinks).
+    trailerStreams: [],
     released: new Date(NaN),
 });
 
