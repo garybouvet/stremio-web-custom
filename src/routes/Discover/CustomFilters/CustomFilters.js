@@ -17,16 +17,40 @@ const keepArrowsInInputs = (event) => {
     }
 };
 
-const useGenres = () => {
-    const [genres, setGenres] = React.useState([]);
-    React.useEffect(() => {
-        fetch('/api/genres', { headers: { 'X-Stremio-Custom': '1' } })
-            .then((r) => r.json())
-            .then((body) => setGenres(body.genres.filter((g) => !['Adult', 'Short'].includes(g))))
-            .catch(() => setGenres([]));
-    }, []);
-    return genres;
+const EMPTY_OPTIONS = { genres: [], languages: [], countries: [] };
+const LANGUAGE_NAMES = new Intl.DisplayNames(['fr'], { type: 'language' });
+const COUNTRY_NAMES = new Intl.DisplayNames(['fr'], { type: 'region' });
+const displayName = (names, code) => {
+    try {
+        return names.of(code);
+    } catch {
+        return code;
+    }
 };
+
+const useOptions = () => {
+    const [options, setOptions] = React.useState(EMPTY_OPTIONS);
+    React.useEffect(() => {
+        fetch('/api/options', { headers: { 'X-Stremio-Custom': '1' } })
+            .then((r) => r.json())
+            .then((body) => setOptions({ ...body, genres: body.genres.filter((g) => !['Adult', 'Short'].includes(g)) }))
+            .catch(() => setOptions(EMPTY_OPTIONS));
+    }, []);
+    return options;
+};
+
+// Langues et pays : TMDB, présents seulement après l'enrichissement (engine.tmdb).
+const CodeSelect = ({ label, codes, names, value, onChange }) => codes.length === 0 ? null : (
+    <fieldset className={styles['field']}>
+        <legend className={styles['label']}>{label}</legend>
+        <select value={value} onChange={(e) => onChange(e.target.value)}>
+            <option value={''}>Toutes</option>
+            {codes.map((c) => [c, displayName(names, c)])
+                .sort((a, b) => a[1].localeCompare(b[1], 'fr'))
+                .map(([c, name]) => <option key={c} value={c}>{name}</option>)}
+        </select>
+    </fieldset>
+);
 
 const Range = ({ label, unit, min, max, step, from, to, onFrom, onTo }) => (
     <fieldset className={styles['field']}>
@@ -42,7 +66,7 @@ const Range = ({ label, unit, min, max, step, from, to, onFrom, onTo }) => (
 
 const CustomFilters = ({ supported, active, filters, setFilters, reset }) => {
     const [open, setOpen] = React.useState(false);
-    const genres = useGenres();
+    const { genres, languages, countries } = useOptions();
     const set = (key) => (value) => setFilters((f) => ({ ...f, [key]: value }));
     const cycleGenre = (g) => setFilters((f) => {
         const next = { ...f.genres, [g]: NEXT_GENRE_STATE[f.genres[g]] };
@@ -79,6 +103,8 @@ const CustomFilters = ({ supported, active, filters, setFilters, reset }) => {
                     </select>
                 </fieldset>
                 <Range label={'Année'} min={1900} max={new Date().getFullYear()} step={1} from={filters.year_min} to={filters.year_max} onFrom={set('year_min')} onTo={set('year_max')} />
+                <CodeSelect label={'Langue originale'} codes={languages} names={LANGUAGE_NAMES} value={filters.language} onChange={set('language')} />
+                <CodeSelect label={'Pays'} codes={countries} names={COUNTRY_NAMES} value={filters.country} onChange={set('country')} />
                 <Range label={'Durée'} unit={'min'} min={0} max={300} step={5} from={filters.runtime_min} to={filters.runtime_max} onFrom={set('runtime_min')} onTo={set('runtime_max')} />
                 {filters.source === 'all' ? <fieldset className={styles['field']}>
                     <legend className={styles['label']}>Tri</legend>
@@ -119,6 +145,14 @@ Range.propTypes = {
     onTo: PropTypes.func,
 };
 
+CodeSelect.propTypes = {
+    label: PropTypes.string,
+    codes: PropTypes.arrayOf(PropTypes.string),
+    names: PropTypes.object,
+    value: PropTypes.string,
+    onChange: PropTypes.func,
+};
+
 CustomFilters.propTypes = {
     supported: PropTypes.bool,
     active: PropTypes.bool,
@@ -131,6 +165,8 @@ CustomFilters.propTypes = {
         year_max: PropTypes.string,
         runtime_min: PropTypes.string,
         runtime_max: PropTypes.string,
+        language: PropTypes.string,
+        country: PropTypes.string,
         genres: PropTypes.objectOf(PropTypes.string),
         genres_mode: PropTypes.string,
         sort: PropTypes.string,
