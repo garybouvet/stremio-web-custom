@@ -14,7 +14,7 @@ const Stream = require('./Stream');
 const styles = require('./styles');
 const { usePlatform, useProfile } = require('stremio/common');
 const { default: SeasonEpisodePicker } = require('../EpisodePicker');
-const { LanguageFilter, useLanguageFilter, badgeClassName, badgeHostClassName } = require('./LanguageFilter');
+const { LanguageFilter, useLanguageFilter, badgeHostClassName } = require('./LanguageFilter');
 
 const ALL_ADDONS_KEY = 'ALL';
 const NO_LANGUAGE_MATCH = 'Aucun lien ne correspond à ces langues.';
@@ -204,7 +204,7 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                                             deepLinks={stream.deepLinks}
                                             externalPlayerCallbackCanMarkWatched={externalPlayerCallbackCanMarkWatched}
                                             onClick={stream.onClick}
-                                            badge={stream.languageBadge ? <span className={badgeClassName}>{stream.languageBadge}</span> : null}
+                                            badge={stream.languageBadge}
                                         />
                                     ))}
                                     {

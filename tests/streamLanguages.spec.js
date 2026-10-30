@@ -1,6 +1,6 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
-const { detect, audioMatch, subsMatch, badge } = require('../src/routes/MetaDetails/StreamsList/LanguageFilter/streamLanguages');
+const { detect, fromProbe, audioMatch, subsMatch, badge } = require('../src/routes/MetaDetails/StreamsList/LanguageFilter/streamLanguages');
 
 // Titres réels renvoyés par Torrentio et MediaFusion (2026-10-30).
 const torrentio = (title) => ({ name: 'Torrentio\n1080p', description: title });
@@ -53,6 +53,29 @@ describe('streamLanguages', () => {
         expect(d.multi).toBe(false);
         expect(audioMatch(d, 'fr')).toBe(null);
         expect(subsMatch(d, 'fr')).toBe('maybe');
+    });
+
+    test('pistes réelles : priment sur le titre', () => {
+        // Résultat réel de /hlsv2/probe sur « Les evades 1994 - 1080p FR EN » (2026-10-30).
+        const d = fromProbe([
+            { track: 'video', language: null }, { track: 'audio', language: 'fre' }, { track: 'audio', language: 'eng' },
+            { track: 'subtitle', language: 'eng' }, { track: 'subtitle', language: 'fre' },
+        ]);
+        expect(audioMatch(d, 'fr')).toBe('sure');
+        expect(subsMatch(d, 'fr')).toBe('sure');
+        expect(audioMatch(d, 'ja')).toBe(null);
+        expect(badge(d)).toBe('✓ FR EN · ST FR');
+    });
+
+    test('pistes réelles : drapeau 🇫🇷 qui n\'était qu\'un sous-titre', () => {
+        const d = fromProbe([{ track: 'audio', language: 'eng' }, { track: 'subtitle', language: 'fre' }]);
+        expect(audioMatch(d, 'fr')).toBe(null);
+        expect(subsMatch(d, 'fr')).toBe('sure');
+    });
+
+    test('pistes réelles sans langue : titre de piste', () => {
+        const d = fromProbe([{ track: 'audio', language: null, title: 'VFF AC3 5.1' }, { track: 'audio', language: 'und', title: 'English' }]);
+        expect([...d.audio]).toEqual(['fr', 'en']);
     });
 
     test('anglais', () => {
