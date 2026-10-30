@@ -4,6 +4,7 @@ const React = require('react');
 
 const STORAGE_KEY = 'custom_filters';
 const PAGE_SIZE = 50;
+const CINEMETA = 'https://v3-cinemeta.strem.io/manifest.json';
 const DEFAULTS = {
     source: 'catalog',
     rating_min: '', rating_max: '', votes_min: '',
@@ -47,7 +48,10 @@ const toMetaItem = (m) => ({
         metaDetailsVideos: `#/detail/${m.type}/${encodeURIComponent(m.id)}`,
         metaDetailsStreams: m.type === 'movie' ? `#/detail/${m.type}/${encodeURIComponent(m.id)}/${encodeURIComponent(m.id)}` : null,
     },
-    links: [{ name: m.imdbRating, category: 'imdb', url: `https://www.imdb.com/title/${m.id}/` }],
+    // Même forme que les liens préparés par stremio-core (MetaPreview exige l'hôte imdb.com exact).
+    links: [{ name: m.imdbRating, category: 'imdb', url: `https://imdb.com/title/${m.id}/` }].concat((m.genres || []).map((g) => ({
+        name: g, category: 'Genres', url: `stremio:///discover/${encodeURIComponent(CINEMETA)}/${m.type}/top?genre=${encodeURIComponent(g)}`,
+    }))),
     // Bandes-annonces brutes de l'addon : l'interface attend celles préparées par stremio-core (avec deepLinks).
     trailerStreams: [],
     released: new Date(NaN),
