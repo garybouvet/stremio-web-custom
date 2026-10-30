@@ -9,11 +9,12 @@ const DEFAULTS = {
     source: 'catalog',
     rating_min: '', rating_max: '', votes_min: '',
     year_min: '', year_max: '', runtime_min: '', runtime_max: '',
+    language: '', country: '',
     genres: {},
     genres_mode: 'all',
     sort: 'rating',
 };
-const RANGE_KEYS = ['rating_min', 'rating_max', 'votes_min', 'year_min', 'year_max', 'runtime_min', 'runtime_max'];
+const RANGE_KEYS = ['rating_min', 'rating_max', 'votes_min', 'year_min', 'year_max', 'runtime_min', 'runtime_max', 'language', 'country'];
 
 const load = () => {
     try {
