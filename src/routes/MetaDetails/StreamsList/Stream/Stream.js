@@ -13,7 +13,7 @@ const { default: useRouteFocused } = require('stremio/common/useRouteFocused');
 const StreamPlaceholder = require('./StreamPlaceholder');
 const styles = require('./styles');
 
-const Stream = ({ className = '', compact = false, isEpg = false, videoId = undefined, videoReleased = undefined, addonName, name, description, thumbnail = undefined, progress, deepLinks, externalPlayerCallbackCanMarkWatched, ...props }) => {
+const Stream = ({ className = '', compact = false, isEpg = false, videoId = undefined, videoReleased = undefined, addonName, name, description, thumbnail = undefined, progress, deepLinks, externalPlayerCallbackCanMarkWatched, badge = null, ...props }) => {
     const profile = useProfile();
     const toast = useToast();
     const platform = usePlatform();
@@ -243,10 +243,11 @@ const Stream = ({ className = '', compact = false, isEpg = false, videoId = unde
                 </div>
                 <div className={styles['description-container']} title={description}>{description}</div>
                 <Icon className={styles['icon']} name={'play'} />
+                {badge}
                 {children}
             </Button>
         );
-    }, [compact, thumbnail, progress, addonName, name, description, href, target, download, onClick, menuOpen]);
+    }, [compact, thumbnail, progress, addonName, name, description, href, target, download, onClick, menuOpen, badge]);
 
     const renderMenu = React.useMemo(() => function renderMenu() {
         return (
@@ -316,6 +317,7 @@ Stream.propTypes = {
     addonName: PropTypes.string,
     name: PropTypes.string,
     description: PropTypes.string,
+    badge: PropTypes.node,
     thumbnail: PropTypes.string,
     progress: PropTypes.number,
     deepLinks: PropTypes.shape({
