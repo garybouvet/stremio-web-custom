@@ -36,12 +36,12 @@ const buildQuery = (f, request) => {
     if (genres('out')) q.set('genres_none', genres('out'));
     if (f.source === 'all') {
         q.set('sort', f.sort);
-        return `/api/search?${q}`;
+        return `api/search?${q}`;
     }
     q.set('addon', request.base);
     q.set('catalog', request.path.id);
     q.set('extra', new URLSearchParams(request.path.extra.filter(([k]) => k !== 'skip')).toString());
-    return `/api/catalog?${q}`;
+    return `api/catalog?${q}`;
 };
 
 const toMetaItem = (m) => ({

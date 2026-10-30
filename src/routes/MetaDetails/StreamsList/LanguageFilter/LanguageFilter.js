@@ -18,6 +18,10 @@ const DEFAULTS = { audio: '', subs: '', includeMaybe: true };
 const RANK = { sure: 0, maybe: 1 };
 const NAMES = new Intl.DisplayNames(['fr'], { type: 'language' });
 const PREFERRED = ['fr', 'en'];
+// Hébergée sur le serveur (iPad, navigateur) : pas de serveur de streaming à côté pour vérifier les pistes,
+// et le navigateur ne décode pas toujours le son (AC3, DTS) : on propose d'ouvrir la fiche dans l'appli Stremio.
+const LOCAL = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
+const OPEN_IN_APP = { label: 'Ouvrir dans Stremio', help: 'Ouvre cette fiche dans l’appli Stremio (lecteur complet, liens triés par l’addon Langues).' };
 
 const load = () => {
     try {
@@ -90,7 +94,7 @@ const useLanguageFilter = (streams) => {
         subsOptions: languageOptions(subsCodes),
         active: filter.audio !== '' || filter.subs !== '',
         verify: () => probe.verify(result),
-        verifiable: probe.pendingCount(result),
+        verifiable: LOCAL ? probe.pendingCount(result) : 0,
         verifying: probe.running,
     };
 };
@@ -120,6 +124,9 @@ const LanguageFilter = ({ streams, total, filter, setFilter, audioOptions, subsO
             {verifying || verifiable > 0 ? <button type={'button'} className={styles['verify']} title={TEXTS.verifyHelp} disabled={!!verifying} onClick={verify}>
                 {verifying ? `${TEXTS.verifying} ${verifying.done} / ${verifying.total}…` : `${TEXTS.verify} (${verifiable})`}
             </button> : null}
+            {LOCAL ? null : <a className={styles['verify']} title={OPEN_IN_APP.help} href={window.location.hash.replace(/^#\//, 'stremio:///')}>
+                {OPEN_IN_APP.label}
+            </a>}
             {active ? <span className={styles['count']}>{`${streams.length} / ${total} ${TEXTS.links}`}</span> : null}
         </div>
     );

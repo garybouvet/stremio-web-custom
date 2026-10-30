@@ -39,7 +39,7 @@ const displayName = (names, code) => {
 const useOptions = () => {
     const [options, setOptions] = React.useState(EMPTY_OPTIONS);
     React.useEffect(() => {
-        fetch('/api/options', { headers: { 'X-Stremio-Custom': '1' } })
+        fetch('api/options', { headers: { 'X-Stremio-Custom': '1' } })
             .then((r) => r.json())
             .then((body) => setOptions({ ...body, genres: body.genres.filter((g) => !['Adult', 'Short'].includes(g)) }))
             .catch(() => setOptions(EMPTY_OPTIONS));

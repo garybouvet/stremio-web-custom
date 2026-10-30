@@ -31,7 +31,7 @@ const loadStored = () => {
     }
 };
 
-const probe = (url) => fetch(`/ss/hlsv2/probe?mediaURL=${encodeURIComponent(url)}`)
+const probe = (url) => fetch(`ss/hlsv2/probe?mediaURL=${encodeURIComponent(url)}`)
     .then((r) => r.ok ? r.json() : Promise.reject(r.status))
     .then((body) => Array.isArray(body.streams) ? body.streams.map(({ track, language, title }) => ({ track, language, title })) : Promise.reject('format'));
 
