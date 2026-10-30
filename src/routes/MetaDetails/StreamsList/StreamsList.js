@@ -14,8 +14,10 @@ const Stream = require('./Stream');
 const styles = require('./styles');
 const { usePlatform, useProfile } = require('stremio/common');
 const { default: SeasonEpisodePicker } = require('../EpisodePicker');
+const { LanguageFilter, useLanguageFilter, badgeClassName, badgeHostClassName } = require('./LanguageFilter');
 
 const ALL_ADDONS_KEY = 'ALL';
+const NO_LANGUAGE_MATCH = 'Aucun lien ne correspond à ces langues.';
 
 const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatched, onEpisodeSearch, ...props }) => {
     const { t } = useTranslation();
@@ -86,6 +88,8 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
             :
             streamsByAddon[effectiveSelectedAddon].streams;
     }, [streamsByAddon, effectiveSelectedAddon]);
+    // Filtre langue audio / sous-titres, appliqué après le choix de l'addon.
+    const languageFilter = useLanguageFilter(filteredStreams);
     const selectableOptions = React.useMemo(() => {
         return {
             options: [
@@ -181,10 +185,15 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                             </div>
                             :
                             <React.Fragment>
+                                <LanguageFilter {...languageFilter} />
                                 <div className={styles['streams-container']} ref={streamsContainerRef}>
-                                    {filteredStreams.map((stream, index) => (
+                                    {languageFilter.streams.length === 0 ?
+                                        <div className={styles['label']}>{NO_LANGUAGE_MATCH}</div>
+                                        : null}
+                                    {languageFilter.streams.map((stream, index) => (
                                         <Stream
                                             key={index}
+                                            className={stream.languageBadge ? badgeHostClassName : undefined}
                                             videoId={video?.id}
                                             videoReleased={video?.released}
                                             addonName={stream.addonName}
@@ -195,7 +204,9 @@ const StreamsList = ({ className, video, type, externalPlayerCallbackCanMarkWatc
                                             deepLinks={stream.deepLinks}
                                             externalPlayerCallbackCanMarkWatched={externalPlayerCallbackCanMarkWatched}
                                             onClick={stream.onClick}
-                                        />
+                                        >
+                                            {stream.languageBadge ? <span className={badgeClassName}>{stream.languageBadge}</span> : null}
+                                        </Stream>
                                     ))}
                                     {
                                         showInstallAddonsButton ?
