@@ -10,7 +10,8 @@ const styles = require('./styles');
 
 // Interface volontairement en français seul : textes regroupés ici plutôt que dans stremio-translations.
 const TEXTS = {
-    all: 'Toutes', to: 'à', catalog: 'Ce catalogue', everything: 'Tout IMDb', reset: 'Réinitialiser',
+    all: 'Toutes', to: 'à', catalog: 'Ce catalogue', sources: 'Toutes les sources', everything: 'Tout', reset: 'Réinitialiser',
+    place: 'Disponible sur', link: 'Liens trouvés', cached: 'en cache',
     rating: 'Note IMDb', votes: 'Nombre de votes', sort: 'Tri', countryNot: 'Sans ce pays',
     genres: 'Genres (un clic : inclure, deux : exclure)', genresAll: 'tous à la fois', genresAny: 'au moins un',
 };
@@ -25,7 +26,13 @@ const keepArrowsInInputs = (event) => {
     }
 };
 
-const EMPTY_OPTIONS = { genres: [], languages: [], countries: [] };
+const EMPTY_OPTIONS = { genres: [], languages: [], countries: [], places: [], scores: [], links: [] };
+const SCORES = [['', 'Toutes'], ['6', '6+'], ['7', '7+'], ['8', '8+'], ['9', '9+']];
+const AS_IS = { of: (name) => name };
+const SCORE_NAMES = {
+    tmdb: 'TMDB', tomatoes: 'Rotten Tomatoes', popcorn: 'Rotten Tomatoes (public)', metacritic: 'Metacritic',
+    metacriticuser: 'Metacritic (public)', trakt: 'Trakt', letterboxd: 'Letterboxd',
+};
 const LANGUAGE_NAMES = new Intl.DisplayNames(['fr'], { type: 'language' });
 const COUNTRY_NAMES = new Intl.DisplayNames(['fr'], { type: 'region' });
 const displayName = (names, code) => {
@@ -36,6 +43,12 @@ const displayName = (names, code) => {
     }
 };
 
+// « fr » ou « fr_cached » (engine.playable).
+const linkName = (link) => {
+    const [lang, cached] = link.split('_');
+    return `Audio ${displayName(LANGUAGE_NAMES, lang)}${cached ? `, ${TEXTS.cached}` : ''}`;
+};
+
 // Résumé affiché dans la barre quand le panneau est replié : on garde la place pour les films.
 const summary = (f) => [
     (f.rating_min || f.rating_max) && `Note ${f.rating_min || 0} à ${f.rating_max || 10}`,
@@ -44,6 +57,9 @@ const summary = (f) => [
     f.language && displayName(LANGUAGE_NAMES, f.language),
     f.country && displayName(COUNTRY_NAMES, f.country),
     f.country_not && `sans ${displayName(COUNTRY_NAMES, f.country_not)}`,
+    f.place,
+    f.link && linkName(f.link),
+    ...Object.keys(SCORE_NAMES).filter((s) => f[`score_${s}_min`]).map((s) => `${SCORE_NAMES[s]} ${f[`score_${s}_min`]}+`),
     (f.runtime_min || f.runtime_max) && `${f.runtime_min || 0} à ${f.runtime_max || '…'} min`,
     ...Object.keys(f.genres).map((g) => `${f.genres[g] === 'out' ? '−' : '+'}${g}`),
 ].filter(Boolean).join(' · ');
@@ -86,7 +102,7 @@ const Range = ({ label, unit, min, max, step, from, to, onFrom, onTo }) => (
 
 const CustomFilters = ({ supported, active, filters, setFilters, reset }) => {
     const [open, setOpen] = React.useState(false);
-    const { genres, languages, countries } = useOptions();
+    const { genres, languages, countries, places, scores, links } = useOptions();
     const set = (key) => (value) => setFilters((f) => ({ ...f, [key]: value }));
     const cycleGenre = (g) => setFilters((f) => {
         const next = { ...f.genres, [g]: NEXT_GENRE_STATE[f.genres[g]] };
@@ -104,6 +120,7 @@ const CustomFilters = ({ supported, active, filters, setFilters, reset }) => {
                 </button>
                 <div className={styles['segmented']} role={'group'} aria-label={'Source'}>
                     <button type={'button'} aria-pressed={filters.source === 'catalog'} onClick={() => set('source')('catalog')}>{TEXTS.catalog}</button>
+                    <button type={'button'} aria-pressed={filters.source === 'sources'} onClick={() => set('source')('sources')}>{TEXTS.sources}</button>
                     <button type={'button'} aria-pressed={filters.source === 'all'} onClick={() => set('source')('all')}>{TEXTS.everything}</button>
                 </div>
                 {active ? <button type={'button'} className={styles['reset']} onClick={reset}>{TEXTS.reset}</button> : null}
@@ -124,8 +141,22 @@ const CustomFilters = ({ supported, active, filters, setFilters, reset }) => {
                 <CodeSelect label={'Langue originale'} codes={languages} names={LANGUAGE_NAMES} value={filters.language} onChange={set('language')} />
                 <CodeSelect label={'Pays'} codes={countries} names={COUNTRY_NAMES} value={filters.country} onChange={set('country')} />
                 <CodeSelect label={TEXTS.countryNot} codes={countries} names={COUNTRY_NAMES} value={filters.country_not} onChange={set('country_not')} />
+                <CodeSelect label={TEXTS.place} codes={places} names={AS_IS} value={filters.place} onChange={set('place')} />
+                {links.length > 0 ? <fieldset className={styles['field']}>
+                    <legend className={styles['label']}>{TEXTS.link}</legend>
+                    <select value={filters.link} onChange={(e) => set('link')(e.target.value)}>
+                        <option value={''}>{TEXTS.all}</option>
+                        {links.flatMap((l) => [l, `${l}_cached`]).map((l) => <option key={l} value={l}>{linkName(l)}</option>)}
+                    </select>
+                </fieldset> : null}
+                {scores.filter((s) => SCORE_NAMES[s]).map((s) => <fieldset key={s} className={styles['field']}>
+                    <legend className={styles['label']}>{SCORE_NAMES[s]}</legend>
+                    <select value={filters[`score_${s}_min`] || ''} onChange={(e) => set(`score_${s}_min`)(e.target.value)}>
+                        {SCORES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                </fieldset>)}
                 <Range label={'Durée'} unit={'min'} min={0} max={300} step={5} from={filters.runtime_min} to={filters.runtime_max} onFrom={set('runtime_min')} onTo={set('runtime_max')} />
-                {filters.source === 'all' ? <fieldset className={styles['field']}>
+                {filters.source !== 'catalog' ? <fieldset className={styles['field']}>
                     <legend className={styles['label']}>{TEXTS.sort}</legend>
                     <select value={filters.sort} onChange={(e) => set('sort')(e.target.value)}>
                         {SORTS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -177,6 +208,8 @@ CustomFilters.propTypes = {
     active: PropTypes.bool,
     filters: PropTypes.shape({
         source: PropTypes.string,
+        place: PropTypes.string,
+        link: PropTypes.string,
         rating_min: PropTypes.string,
         rating_max: PropTypes.string,
         votes_min: PropTypes.string,

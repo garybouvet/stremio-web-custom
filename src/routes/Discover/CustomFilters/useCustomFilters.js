@@ -7,16 +7,19 @@ const React = require('react');
 const STORAGE_KEY = 'custom_filters';
 const PAGE_SIZE = 50;
 const CINEMETA = 'https://v3-cinemeta.strem.io/manifest.json';
+const FILTRES_ADDON = /\/filtres\/manifest\.json$/;
 const DEFAULTS = {
     source: 'catalog',
     rating_min: '', rating_max: '', votes_min: '',
     year_min: '', year_max: '', runtime_min: '', runtime_max: '',
-    language: '', country: '', country_not: '',
+    language: '', country: '', country_not: '', place: '', link: '',
     genres: {},
     genres_mode: 'all',
     sort: 'rating',
 };
-const RANGE_KEYS = ['rating_min', 'rating_max', 'votes_min', 'year_min', 'year_max', 'runtime_min', 'runtime_max', 'language', 'country', 'country_not'];
+const RANGE_KEYS = ['rating_min', 'rating_max', 'votes_min', 'year_min', 'year_max', 'runtime_min', 'runtime_max', 'language', 'country', 'country_not', 'place', 'link'];
+// Notes d'autres sources (score_tomatoes_min…) : la liste vient du moteur, selon ce qui a été récupéré.
+const keysOf = (f) => RANGE_KEYS.concat(Object.keys(f).filter((k) => k.startsWith('score_')));
 
 const load = () => {
     try {
@@ -26,17 +29,34 @@ const load = () => {
     }
 };
 
-const hasCriteria = (f) => f.source === 'all' || RANGE_KEYS.some((k) => f[k] !== '') || Object.keys(f.genres).length > 0;
+const hasCriteria = (f) => f.source !== 'catalog' || keysOf(f).some((k) => f[k] !== '') || Object.keys(f.genres).length > 0;
 
-const buildQuery = (f, request) => {
+// Tous les catalogues du type affiché, groupés par addon pour garder l'adresse courte. Filtres n'est que l'index IMDb.
+const sourcesOf = (catalogs) => {
+    const sources = {};
+    catalogs.forEach(({ id, deepLinks }) => {
+        // #/discover/<adresse de l'addon>/<type>/<catalogue>?<extra> : stremio-core ne donne l'adresse que dans ce lien.
+        const [path, extra = ''] = deepLinks.discover.split('?');
+        const url = decodeURIComponent(path.split('/')[2]);
+        if (!FILTRES_ADDON.test(url)) sources[url] = (sources[url] || []).concat([[id, extra]]);
+    });
+    return JSON.stringify(sources);
+};
+
+const buildQuery = (f, request, catalogs) => {
     const q = new URLSearchParams({ type: request.path.type, limit: PAGE_SIZE });
-    RANGE_KEYS.forEach((k) => f[k] !== '' && q.set(k, f[k]));
+    keysOf(f).forEach((k) => f[k] !== '' && q.set(k, f[k]));
     const genres = (state) => Object.keys(f.genres).filter((g) => f.genres[g] === state).join(',');
     if (genres('in')) q.set(f.genres_mode === 'all' ? 'genres_all' : 'genres_any', genres('in'));
     if (genres('out')) q.set('genres_none', genres('out'));
     if (f.source === 'all') {
         q.set('sort', f.sort);
         return `api/search?${q}`;
+    }
+    if (f.source === 'sources') {
+        q.set('sort', f.sort);
+        q.set('sources', sourcesOf(catalogs));
+        return `api/sources?${q}`;
     }
     q.set('addon', request.base);
     q.set('catalog', request.path.id);
@@ -52,7 +72,7 @@ const toMetaItem = (m) => ({
         metaDetailsStreams: m.type === 'movie' ? `#/detail/${m.type}/${encodeURIComponent(m.id)}/${encodeURIComponent(m.id)}` : null,
     },
     // Même forme que les liens préparés par stremio-core (MetaPreview exige l'hôte imdb.com exact).
-    links: [{ name: m.imdbRating, category: 'imdb', url: `https://imdb.com/title/${m.id}/` }].concat((m.genres || []).map((g) => ({
+    links: (m.imdbRating && m.id.startsWith('tt') ? [{ name: m.imdbRating, category: 'imdb', url: `https://imdb.com/title/${m.id}/` }] : []).concat((m.genres || []).map((g) => ({
         name: g, category: 'Genres', url: `stremio:///discover/${encodeURIComponent(CINEMETA)}/${m.type}/top?genre=${encodeURIComponent(g)}`,
     }))),
     // Bandes-annonces brutes de l'addon : l'interface attend celles préparées par stremio-core (avec deepLinks).
@@ -66,7 +86,7 @@ const useCustomFilters = (discover) => {
     const request = discover.selected?.request ?? null;
     const supported = request !== null && ['movie', 'series'].includes(request.path.type);
     const active = supported && hasCriteria(filters);
-    const query = active ? buildQuery(filters, request) : null;
+    const query = active ? buildQuery(filters, request, discover.selectable.catalogs) : null;
     const requestIdRef = React.useRef(0);
 
     React.useEffect(() => {
@@ -85,7 +105,12 @@ const useCustomFilters = (discover) => {
             .then(({ metas, next }) => {
                 if (id !== requestIdRef.current) return;
                 const nextSkip = filters.source === 'all' ? (metas.length < PAGE_SIZE ? null : skip + metas.length) : next;
-                setResult((r) => ({ items: (append ? r.items : []).concat(metas.map(toMetaItem)), next: nextSkip, status: 'Ready', error: null, loadingMore: false }));
+                setResult((r) => {
+                    // « Toutes les sources » : une page lue entre-temps peut décaler le classement d'un titre déjà affiché.
+                    const items = append ? r.items : [];
+                    const shown = new Set(items.map(({ id }) => id));
+                    return { items: items.concat(metas.filter(({ id }) => !shown.has(id)).map(toMetaItem)), next: nextSkip, status: 'Ready', error: null, loadingMore: false };
+                });
             })
             .catch((error) => {
                 if (id !== requestIdRef.current) return;
