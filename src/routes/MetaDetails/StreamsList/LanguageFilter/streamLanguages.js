@@ -1,8 +1,11 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
 // Langues d'un lien, devinées depuis son texte : les addons n'ont aucun champ « langue ».
-// sûr = mot explicite (FRENCH, VFF, VOSTFR, « 🌐 English + French »…) ; incertain = MULTi ou drapeau seul,
-// car les drapeaux de Torrentio mélangent audio et sous-titres.
+// Règles par source, mesurées avec ffprobe sur de vrais fichiers (2026-11-05) :
+// - MediaFusion, « 🌐 English + French » : langues audio (5 sur 5).
+// - Torrentio, « Multi Audio / 🇬🇧 / 🇫🇷 » : drapeaux = audio (5 sur 5).
+// - Torrentio, drapeaux seuls : le premier est l'audio, les suivants des sous-titres (6 sur 6).
+// sûr = mot explicite ou ligne ci-dessus ; incertain = MULTi sans détail, ou premier drapeau.
 
 const FLAGS = {
     GB: 'en', US: 'en', FR: 'fr', BE: 'fr', CA: 'fr', ES: 'es', MX: 'es', IT: 'it', DE: 'de', PT: 'pt', BR: 'pt',
@@ -23,14 +26,19 @@ const SUBS_HINT = /\bsubs?\b|subtitles?|napisy|multi[ ._-]?subs|\bmsubs\b/i;
 // « Multi Subs » = plusieurs sous-titres, pas plusieurs pistes audio.
 const MULTI = /\bMULTI(?![ ._-]?SUBS?\b)(?:[ ._-]?AUDIO|[ ._-]?LANG)?\b/i;
 const FLAG = /([\u{1F1E6}-\u{1F1FF}])([\u{1F1E6}-\u{1F1FF}])/gu;
+const AUDIO_LINE = /^(?:multi|dual)[ ._-]?audio\b.*$/im;
+// Codes de sortie (« Eng Fr Spa », « MULTi.KOR ») ; pas les noms entiers : « The Italian Job » n'est pas en italien.
+const AUDIO_CODES = { es: /\b(SPA|ESP)\b/i, it: /\bITA\b/i, de: /\b(GER|DEU)\b/i, ja: /\bJPN\b/i, ko: /\bKOR\b/i };
 
 const regionOf = (a, b) => String.fromCharCode(a.codePointAt(0) - 0x1F1E6 + 65, b.codePointAt(0) - 0x1F1E6 + 65);
+const flagsIn = (text) => [...text.matchAll(FLAG)].map(([, a, b]) => FLAGS[regionOf(a, b)]).filter(Boolean);
 
 const detect = ({ name = '', description = '' } = {}) => {
     const text = `${name || ''}\n${description || ''}`;
     const audio = new Set();
     const subs = new Set();
-    const flags = new Set();
+    const ordered = flagsIn(text);
+    const subsHint = SUBS_HINT.test(text);
     if (SUBS_FR.test(text)) subs.add('fr');
     // « VOSTFR » contient « FR » : on l'enlève avant de chercher l'audio français.
     const withoutSubs = text.replace(new RegExp(SUBS_FR.source, 'gi'), ' ');
@@ -41,11 +49,12 @@ const detect = ({ name = '', description = '' } = {}) => {
     if (listed) {
         listed[1].split(/[+,/|]/).map((s) => NAMES[s.trim().toLowerCase()]).filter(Boolean).forEach((l) => audio.add(l));
     }
-    for (const [, a, b] of text.matchAll(FLAG)) {
-        const lang = FLAGS[regionOf(a, b)];
-        if (lang) flags.add(lang);
+    const audioLine = text.match(AUDIO_LINE);
+    if (audioLine) flagsIn(audioLine[0]).forEach((l) => audio.add(l));
+    if (!subsHint) {
+        Object.entries(AUDIO_CODES).filter(([, code]) => code.test(withoutSubs)).forEach(([l]) => audio.add(l));
     }
-    return { audio, subs, flags, multi: MULTI.test(text), subsHint: SUBS_HINT.test(text) };
+    return { audio, subs, flags: new Set(ordered), first: ordered[0], multi: MULTI.test(text), subsHint };
 };
 
 // Pistes réelles lues par ffprobe (serveur de streaming, /hlsv2/probe) : langue ISO 639-2, ou titre de piste.
@@ -72,8 +81,10 @@ const fromProbe = (tracks) => {
 const audioMatch = (d, lang) => {
     if (d.audio.has(lang)) return 'sure';
     if (d.verified) return null;
+    // MULTi sans détail : l'anglais est souvent omis des drapeaux.
+    if (d.multi && (d.flags.size === 0 || lang === 'en' || d.flags.has(lang))) return 'maybe';
     // Sortie qui annonce des sous-titres : ses drapeaux sont ceux des sous-titres, pas de l'audio.
-    if (d.multi || (d.flags.has(lang) && !d.subs.has(lang) && !d.subsHint)) return 'maybe';
+    if (lang === d.first && !d.subs.has(lang) && !d.subsHint) return 'maybe';
     return null;
 };
 
@@ -93,7 +104,7 @@ const badge = (d, lang = 'fr') => {
     if (d.subs.has(lang) && !d.audio.has(lang)) return lang === 'fr' ? 'VOSTFR' : `ST ${lang.toUpperCase()}`;
     if (d.audio.has(lang)) return lang === 'fr' ? 'VF' : lang.toUpperCase();
     if (d.multi) return 'MULTi';
-    if (d.flags.has(lang)) return d.subsHint ? `ST ${lang.toUpperCase()} ?` : `${lang.toUpperCase()} ?`;
+    if (d.flags.has(lang)) return d.subsHint || lang !== d.first ? `ST ${lang.toUpperCase()} ?` : `${lang.toUpperCase()} ?`;
     return null;
 };
 

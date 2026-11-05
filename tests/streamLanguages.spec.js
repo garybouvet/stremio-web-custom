@@ -22,9 +22,32 @@ describe('streamLanguages', () => {
         }
     });
 
-    test('MULTi compte comme français possible', () => {
-        expect(audioMatch(detect(MULTI), 'fr')).toBe('maybe');
-        expect(badge(detect(MULTI))).toBe('MULTi');
+    test('MULTi sans détail : français possible', () => {
+        const d = detect(torrentio('Film.2024.MULTi.1080p.WEB'));
+        expect(audioMatch(d, 'fr')).toBe('maybe');
+        expect(badge(d)).toBe('MULTi');
+    });
+
+    test('Torrentio « Multi Audio » : ses drapeaux sont l\'audio', () => {
+        expect(audioMatch(detect(MULTI), 'fr')).toBe('sure');
+        expect(badge(detect(MULTI))).toBe('VF');
+        expect(audioMatch(detect(torrentio('Film.2024.MULTi.1080p\nMulti Audio / 🇬🇧 / 🇪🇸')), 'fr')).toBe(null);
+    });
+
+    test('Torrentio, drapeaux seuls : premier = audio, suivants = sous-titres', () => {
+        // Pistes réelles lues le 2026-11-05 : audio anglais seul, sous-titres français.
+        const d = detect(torrentio('Backrooms 2026 BluRay 1080p DDP 5 1 x264-hallowed\n👤 96 💾 8.25 GB ⚙️ ThePirateBay\n🇬🇧 / 🇪🇸 / 🇫🇷'));
+        expect(audioMatch(d, 'fr')).toBe(null);
+        expect(audioMatch(d, 'es')).toBe(null);
+        expect(audioMatch(d, 'en')).toBe('maybe');
+        expect(subsMatch(d, 'fr')).toBe('maybe');
+        expect(badge(d)).toBe('ST FR ?');
+    });
+
+    test('codes de sortie : audio, mais pas un mot du titre', () => {
+        expect(audioMatch(detect(torrentio('Parasite.2019.MULTi.KOR.Bluray.1080p')), 'ko')).toBe('sure');
+        expect(audioMatch(detect(torrentio('Dune (2024 Eng 7.1-Fre 5.1-Spa 5.1)')), 'es')).toBe('sure');
+        expect(audioMatch(detect(torrentio('The.Italian.Job.2003.1080p.BluRay')), 'it')).toBe(null);
     });
 
     test('drapeaux d\'une sortie à sous-titres : pas de l\'audio', () => {
