@@ -110,6 +110,9 @@ const CustomFilters = ({ supported, active, filters, setFilters, reset }) => {
                 {active && !open ? <span className={styles['summary']}>{summary(filters)}</span> : null}
             </div>
             {open ? <div className={styles['panel']} onKeyDown={keepArrowsInInputs}>
+                <button type={'button'} className={styles['close']} aria-label={'Fermer les filtres'} title={'Fermer les filtres'} onClick={() => setOpen(false)}>
+                    <Icon className={styles['icon']} name={'close'} />
+                </button>
                 <Range label={TEXTS.rating} min={0} max={10} step={0.5} from={filters.rating_min} to={filters.rating_max} onFrom={set('rating_min')} onTo={set('rating_max')} />
                 <fieldset className={styles['field']}>
                     <legend className={styles['label']}>{TEXTS.votes}</legend>
