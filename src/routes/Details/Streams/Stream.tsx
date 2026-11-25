@@ -22,6 +22,7 @@ type Props = {
     videoReleased?: string | null,
     canMarkWatched?: boolean,
     card?: boolean,
+    summary?: React.ReactNode,
     onPlay?: (stream: Stream) => void,
 };
 
@@ -39,7 +40,7 @@ const COPY_MESSAGES: Record<CopyKind, { success: string, error: string }> = {
 
 const renderThumbnailFallback = () => <Icon className={styles['thumbnail-fallback']} name={'ic_broken_link'} />;
 
-const Stream = ({ className, stream, playerType, addonName, videoId, videoReleased, canMarkWatched, card, onPlay }: Props) => {
+const Stream = ({ className, stream, playerType, addonName, videoId, videoReleased, canMarkWatched, card, summary, onPlay }: Props) => {
     const { t } = useTranslation();
     const toast = useToast();
     const { open, closeMenu, labelProps, menuProps } = useRowMenu();
@@ -104,7 +105,7 @@ const Stream = ({ className, stream, playerType, addonName, videoId, videoReleas
                                 />
                             </div>
                             :
-                            <div className={styles['name']} title={name}>{name}</div>
+                            summary ?? <div className={styles['name']} title={name}>{name}</div>
                     }
                     {
                         lastUsed ?
@@ -131,7 +132,7 @@ const Stream = ({ className, stream, playerType, addonName, videoId, videoReleas
             </div>
             {children}
         </Button>
-    ), [lastUsed, card, addonName, href, target, download, onClick, thumbnail, name, stream.description, progress, external, t]);
+    ), [lastUsed, card, addonName, href, target, download, onClick, thumbnail, name, summary, stream.description, progress, external, t]);
 
     const renderMenu = useCallback(() => (
         <div className={styles['menu']} {...menuProps}>

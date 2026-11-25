@@ -18,6 +18,8 @@ import Message from '../Message';
 import EpisodePicker from '../EpisodePicker';
 import Stream from './Stream';
 import useStreamsByAddon from './useStreamsByAddon';
+import { LinkPicker, useLinkPicker, Badges, EmptyLinks } from './LinkPicker';
+import { LANGUAGE_ADDON } from './LinkPicker/streamInfo';
 import styles from './Streams.less';
 
 type Props = {
@@ -55,7 +57,7 @@ const Streams = ({ streams, video, type, canMarkWatched, title, onBack, onEpisod
     const options = useMemo(() => {
         return [
             { value: ALL_ADDONS_KEY, label: t('ALL_ADDONS'), count: total },
-            ...groups.map(({ addon, streams }) => ({
+            ...groups.filter(({ addon }) => !LANGUAGE_ADDON.test(addon.transportUrl)).map(({ addon, streams }) => ({
                 value: addon.transportUrl,
                 label: addon.manifest.name,
                 count: streams.length,
@@ -69,6 +71,13 @@ const Streams = ({ streams, video, type, canMarkWatched, title, onBack, onEpisod
             :
             groups.filter(({ addon }) => addon.transportUrl === effectiveSelectedAddon);
     }, [groups, effectiveSelectedAddon]);
+
+    const picker = useLinkPicker(visibleGroups);
+    const sections = [
+        { key: 'ready', label: 'Prêts à lire', links: picker.ready },
+        { key: 'later', label: 'À télécharger d’abord', links: picker.later },
+        { key: 'external', label: 'Sur d’autres sites', links: picker.external },
+    ].filter(({ links }) => links.length > 0);
 
     const groupsRef = useRef<HTMLDivElement>(null);
     const hasLastUsed = visibleGroups.some(({ streams }) => streams.some((stream) => stream.lastUsed === true));
@@ -138,6 +147,7 @@ const Streams = ({ streams, video, type, canMarkWatched, title, onBack, onEpisod
                     :
                     null
             }
+            {total > 0 ? <LinkPicker {...picker} /> : null}
             <div className={classNames(styles['loading-line'], { [styles['active']]: loadingCount > 0 })} role={'status'} aria-label={loadingCount > 0 ? loadingLabel : undefined} aria-hidden={loadingCount === 0} />
         </React.Fragment>
     );
@@ -169,20 +179,17 @@ const Streams = ({ streams, video, type, canMarkWatched, title, onBack, onEpisod
                             <Placeholder variant={'streams'} />
                             :
                             <div ref={groupsRef} className={styles['groups']}>
+                                {picker.ready.length === 0 && loadingCount === 0 && picker.total > 0 ? <EmptyLinks {...picker} /> : null}
                                 {
-                                    visibleGroups.map(({ addon, streams }) => (
-                                        <section key={addon.transportUrl} className={styles['group']} aria-label={addon.manifest.name}>
+                                    sections.map(({ key, label, links }) => (
+                                        <section key={key} className={styles['group']} aria-label={label}>
+                                            <p className={styles['group-label']}>{label}</p>
                                             {
-                                                effectiveSelectedAddon === ALL_ADDONS_KEY ?
-                                                    <p className={styles['group-label']}>{addon.manifest.name}</p>
-                                                    :
-                                                    null
-                                            }
-                                            {
-                                                streams.map((stream, index) => (
+                                                links.map(({ stream, addon, ...link }, index) => (
                                                     <Stream
                                                         key={index}
                                                         stream={stream}
+                                                        summary={key === 'external' ? undefined : <Badges link={link} />}
                                                         playerType={profile.settings.playerType}
                                                         addonName={addon.manifest.name}
                                                         videoId={video?.id}
