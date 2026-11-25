@@ -12,6 +12,7 @@ import { Tooltip } from 'stremio/common/Tooltips';
 import getMetaDetailsHref from 'stremio/common/getMetaDetailsHref';
 import getReleaseYear from 'stremio/common/getReleaseYear';
 import useMetaLinks from 'stremio/common/useMetaLinks';
+import { useCustomPreview, trailerOf } from 'stremio/common/customPreview';
 import CONSTANTS from 'stremio/common/CONSTANTS';
 import styles from './Slide.less';
 
@@ -28,7 +29,7 @@ const Slide = ({ id, item, active, onToggleLibrary }: Props) => {
     const genres = groups.find(({ category }) => category === CONSTANTS.GENRES_LINK_CATEGORY)?.links.map(({ label }) => t(label)).join(', ') ?? null;
     const detailsHref = getMetaDetailsHref(item.deepLinks);
     const watchHref = item.deepLinks.player ?? item.deepLinks.metaDetailsStreams ?? item.deepLinks.metaDetailsVideos;
-    const trailerHref = item.trailerStreams[0]?.deepLinks.player ?? null;
+    const trailerHref = trailerOf(useCustomPreview(item.type, item.id), item.trailerStreams[0]?.deepLinks.player ?? null);
     const libraryLabel = item.inLibrary ? t('REMOVE_FROM_LIB') : t('ADD_TO_LIB');
 
     return (

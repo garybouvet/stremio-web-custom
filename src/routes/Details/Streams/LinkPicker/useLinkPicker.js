@@ -7,6 +7,7 @@ const { useParams } = require('react-router');
 const { detect, fromProbe, audioMatch, subsMatch, badge } = require('./streamLanguages');
 const { availability, qualityOf, sizeOf, hdrOf, looksWrong, unique } = require('./streamInfo');
 const { useTrackProbe } = require('./useTrackProbe');
+const { useCustomPreview } = require('stremio/common/customPreview');
 
 const STORAGE_KEY = 'stream_language_filter';
 const DEFAULTS = { audio: '', subs: '', includeMaybe: true, quality: '', maxSize: '', readyOnly: true };
@@ -32,22 +33,6 @@ const languageOptions = (codes) => [...codes]
     .sort((a, b) => (weight(a) - weight(b)) || NAMES.of(a).localeCompare(NAMES.of(b), 'fr'))
     .map((code) => ({ value: code, label: NAMES.of(code).replace(/^./, (c) => c.toUpperCase()) }));
 
-// Noms connus du titre, pour repérer les liens d'un autre film ; sans moteur, la vérification est simplement absente.
-const useKnownNames = (type, id) => {
-    const [known, setKnown] = React.useState(null);
-    React.useEffect(() => {
-        setKnown(null);
-        if (!['movie', 'series'].includes(type) || !id) return;
-        const controller = new AbortController();
-        fetch(`api/preview?${new URLSearchParams({ type, id })}`, { headers: { 'X-Stremio-Custom': '1' }, signal: controller.signal })
-            .then((r) => r.ok ? r.json() : null)
-            .then(setKnown)
-            .catch(() => setKnown(null));
-        return () => controller.abort();
-    }, [type, id]);
-    return known;
-};
-
 const better = (x, y) => (Number(x.wrong) - Number(y.wrong)) || (x.rank - y.rank) || (Number(!x.d.verified) - Number(!y.d.verified)) ||
     (y.quality - x.quality) || (Number(x.size > HEAVY) - Number(y.size > HEAVY)) || ((y.size ?? 0) - (x.size ?? 0));
 
@@ -55,7 +40,8 @@ const useLinkPicker = (groups) => {
     const [filter, setFilter] = React.useState(load);
     const [relaxed, setRelaxed] = React.useState(NOTHING_RELAXED);
     const { type, id, videoId } = useParams();
-    const known = useKnownNames(type, id);
+    // Noms connus du titre, pour repérer les liens d'un autre film ; sans moteur, la vérification est simplement absente.
+    const known = useCustomPreview(type, id);
     const probe = useTrackProbe();
     const { tracksOf } = probe;
 

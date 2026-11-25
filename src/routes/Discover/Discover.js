@@ -262,7 +262,7 @@ const Discover = () => {
         released: selectedMetaItem.released,
         description: preview.description ?? selectedMetaItem.description,
         metadata: preview.metadata,
-        trailerHref: selectedMetaItem.trailerStreams[0]?.deepLinks.player ?? preview.trailerHref ?? null,
+        trailerHref: preview.trailerHref ?? null,
         inLibrary: selectedMetaItem.inLibrary,
         watched: selectedMetaItem.watched,
         ...libraryActions,
