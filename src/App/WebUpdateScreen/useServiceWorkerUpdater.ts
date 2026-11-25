@@ -90,6 +90,8 @@ const useServiceWorkerUpdater = () => {
             process.env.NODE_ENV !== 'production' ||
             serviceWorkerDisabled === 'true' ||
             serviceWorkerDisabled === true ||
+            // moteur local : l'interface vient du disque, un cache ne ferait que montrer une ancienne version
+            ['127.0.0.1', 'localhost'].includes(window.location.hostname) ||
             !('serviceWorker' in navigator)
         ) {
             return;
