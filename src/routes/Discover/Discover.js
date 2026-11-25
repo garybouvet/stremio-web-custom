@@ -6,7 +6,6 @@ const { useParams } = require('react-router');
 const { useSearchParams } = require('react-router-dom');
 const classnames = require('classnames');
 const { default: Icon } = require('@stremio/stremio-icons/react');
-const { useCore } = require('stremio/core');
 const { CONSTANTS, useBinaryState, useMediaQuery, useOnScrollToBottom, withCoreSuspender } = require('stremio/common');
 const { epgDateKey, parseEpgDate } = require('stremio/common/EPG');
 const screenSizes = require('stremio/common/screen-sizes.less');
@@ -22,6 +21,7 @@ const { default: Guide } = require('./Guide');
 const { default: DaySelector } = require('./Guide/DaySelector');
 const { default: ProgramPreview } = require('./Guide/ProgramPreview');
 const { default: useLiveTvGuide } = require('./useLiveTvGuide');
+const { CustomFilters, useCustomFilters, useTitlePreview, useLibraryActions } = require('./CustomFilters');
 const styles = require('./styles');
 
 const SCROLL_TO_BOTTOM_THRESHOLD = 400;
@@ -46,11 +46,17 @@ const Discover = () => {
         return params;
     }, [queryParams]);
     const { t } = useTranslation();
-    const core = useCore();
     const { navigateWithOrigin } = useNavigateWithOrigin();
     const routeActive = useRouteActive();
-    const [discover, loadNextPage] = useDiscover(urlParams, catalogQueryParams);
-    const [selectInputs, hasNextPage] = useSelectableInputs(discover);
+    const [coreDiscover, coreLoadNextPage] = useDiscover(urlParams, catalogQueryParams);
+    const [selectInputs, coreHasNextPage] = useSelectableInputs(coreDiscover);
+    // Filtres cumulables : quand ils sont actifs, la liste vient du moteur local au lieu de l'addon.
+    const customFilters = useCustomFilters(coreDiscover, routeActive);
+    const { discover } = customFilters;
+    const loadNextPage = customFilters.active ? customFilters.loadNextPage : coreLoadNextPage;
+    const hasNextPage = customFilters.active ? customFilters.hasNextPage : coreHasNextPage;
+    // Hors de « Ce catalogue », seul le type compte : les menus Catalogue et Genre n'auraient aucun effet.
+    const shownInputs = customFilters.active && customFilters.filters.source !== 'catalog' ? selectInputs.slice(0, 1) : selectInputs;
     const [filtersOpen, openFilters, closeFilters] = useBinaryState(false);
     const selectedTypeOption = selectInputs[0].options.find(({ value }) => value === selectInputs[0].value);
     const selectedCatalogOption = selectInputs[1].options.find(({ value }) => value === selectInputs[1].value);
@@ -125,48 +131,6 @@ const Discover = () => {
             }
         }
     }, [discover.catalog, isEpgLayout, hasNextPage, loadNextPage]);
-    const addToLibrary = React.useCallback(() => {
-        if (selectedMetaItem === null) {
-            return;
-        }
-
-        core.transport.dispatch({
-            action: 'Ctx',
-            args: {
-                action: 'AddToLibrary',
-                args: selectedMetaItem
-            }
-        });
-    }, [selectedMetaItem]);
-    const removeFromLibrary = React.useCallback(() => {
-        if (selectedMetaItem === null) {
-            return;
-        }
-
-        core.transport.dispatch({
-            action: 'Ctx',
-            args: {
-                action: 'RemoveFromLibrary',
-                args: selectedMetaItem.id
-            }
-        });
-    }, [selectedMetaItem]);
-    const toggleWatched = React.useCallback(() => {
-        if (selectedMetaItem === null) {
-            return;
-        }
-
-        core.transport.dispatch({
-            action: 'Ctx',
-            args: {
-                action: 'MetaItemMarkAsWatched',
-                args: {
-                    meta_item: selectedMetaItem,
-                    is_watched: !selectedMetaItem.watched,
-                }
-            }
-        });
-    }, [selectedMetaItem]);
     const metaItemsOnFocusCapture = React.useCallback((event) => {
         if (event.target.dataset.index !== null && !isNaN(event.target.dataset.index)) {
             setSelectedMetaItemIndex(parseInt(event.target.dataset.index, 10));
@@ -287,6 +251,8 @@ const Discover = () => {
         );
     };
 
+    const preview = useTitlePreview(isEpgLayout ? null : selectedMetaItem);
+    const libraryActions = useLibraryActions(selectedMetaItem, customFilters.libraryChanged);
     const showHref = selectedMetaItem?.deepLinks.player ?? selectedMetaItem?.deepLinks.metaDetailsStreams ?? selectedMetaItem?.deepLinks.metaDetailsVideos ?? null;
     const metaPreviewProps = selectedMetaItem && {
         name: selectedMetaItem.name,
@@ -294,12 +260,12 @@ const Discover = () => {
         runtime: selectedMetaItem.runtime,
         releaseInfo: selectedMetaItem.releaseInfo,
         released: selectedMetaItem.released,
-        description: selectedMetaItem.description,
-        trailerHref: selectedMetaItem.trailerStreams[0]?.deepLinks.player ?? null,
+        description: preview.description ?? selectedMetaItem.description,
+        metadata: preview.metadata,
+        trailerHref: selectedMetaItem.trailerStreams[0]?.deepLinks.player ?? preview.trailerHref ?? null,
         inLibrary: selectedMetaItem.inLibrary,
-        onToggleLibrary: selectedMetaItem.inLibrary ? removeFromLibrary : addToLibrary,
         watched: selectedMetaItem.watched,
-        onToggleWatched: toggleWatched,
+        ...libraryActions,
     };
 
     const renderMetaPreview = () => {
@@ -330,7 +296,7 @@ const Discover = () => {
                     {...metaPreviewProps}
                     className={styles['preview']}
                     background={selectedMetaItem.poster}
-                    links={selectedMetaItem.links}
+                    links={preview.links ?? selectedMetaItem.links}
                     show={showHref !== null ? { href: showHref } : null}
                 />
             );
@@ -376,7 +342,7 @@ const Discover = () => {
             <MetaPreview
                 {...metaPreviewProps}
                 background={selectedMetaItem.background || selectedMetaItem.poster}
-                links={selectedMetaItem.links?.filter((link) => link?.category !== 'Cast' && link?.category !== 'Directors')}
+                links={(preview.links ?? selectedMetaItem.links)?.filter((link) => link?.category !== 'Cast' && link?.category !== 'Directors')}
                 show={showHref !== null ? { href: showHref, icon: 'chevron-forward', onClick: onMobileShowClick } : null}
             />
         );
@@ -404,7 +370,7 @@ const Discover = () => {
                                 {activeFilterCount > 0 && <span className={styles['filter-count']}>{activeFilterCount}</span>}
                             </Button>
                         </div> : <div className={styles['selectable-inputs']}>
-                            {selectInputs.map(({ title, options, value, onSelect }, index) => (
+                            {shownInputs.map(({ title, options, value, onSelect }, index) => (
                                 <MultiselectMenu
                                     key={index}
                                     className={styles['select-input']}
@@ -433,6 +399,7 @@ const Discover = () => {
                                 null
                         }
                     </div>
+                    {isEpgLayout ? null : <CustomFilters {...customFilters} />}
                     {
                         discover.catalog !== null && !discover.catalog.installed ?
                             <div className={styles['missing-addon-warning-container']}>

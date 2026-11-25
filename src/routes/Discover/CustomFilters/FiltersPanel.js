@@ -1,0 +1,135 @@
+// Copyright (C) 2017-2026 Smart code 203358507
+
+// Champs du panneau de filtres.
+
+const React = require('react');
+const PropTypes = require('prop-types');
+const classnames = require('classnames');
+const { default: Button } = require('stremio/components/Button');
+const { default: MultiselectMenu } = require('stremio/components/MultiselectMenu');
+const { TEXTS, VOTES, SORTS, SCORES, GENRE_MODES, SCORE_NAMES, GENRES, languageName, countryName, linkName, choices } = require('./labels');
+const styles = require('./styles');
+
+const AS_IS = (name) => name;
+const NEXT_GENRE_STATE = { undefined: 'in', in: 'out', out: undefined };
+const GENRE_STATES = { in: 'inclus', out: 'exclu' };
+
+// Comme CredentialsTextInput : les flèches règlent le champ au lieu de déplacer le focus (navigation spatiale).
+const keepArrowsInInputs = (event) => {
+    if (event.target.tagName === 'INPUT' && event.key.startsWith('Arrow')) {
+        event.nativeEvent.spatialNavigationPrevented = true;
+    }
+};
+
+const Choice = ({ label, options, value, onChange }) => options.length < 2 ? null : (
+    <div className={styles['field']} role={'group'} aria-label={label}>
+        <div className={styles['label']}>{label}</div>
+        <MultiselectMenu className={styles['menu']} portal={true} options={options} value={value || ''} onSelect={onChange} />
+    </div>
+);
+
+Choice.propTypes = {
+    label: PropTypes.string,
+    options: PropTypes.array,
+    value: PropTypes.string,
+    onChange: PropTypes.func,
+};
+
+const Range = ({ label, min, max, step, from, to, onFrom, onTo }) => (
+    <div className={styles['field']} role={'group'} aria-label={label}>
+        <div className={styles['label']}>{label}</div>
+        <div className={styles['range']}>
+            <input type={'number'} inputMode={'decimal'} aria-label={`${label} minimum`} placeholder={String(min)} min={min} max={max} step={step} value={from} onChange={(e) => onFrom(e.target.value)} />
+            <span className={styles['dash']}>{TEXTS.to}</span>
+            <input type={'number'} inputMode={'decimal'} aria-label={`${label} maximum`} placeholder={String(max)} min={min} max={max} step={step} value={to} onChange={(e) => onTo(e.target.value)} />
+        </div>
+    </div>
+);
+
+Range.propTypes = {
+    label: PropTypes.string,
+    min: PropTypes.number,
+    max: PropTypes.number,
+    step: PropTypes.number,
+    from: PropTypes.string,
+    to: PropTypes.string,
+    onFrom: PropTypes.func,
+    onTo: PropTypes.func,
+};
+
+const FiltersPanel = ({ options, filters, setFilters, children }) => {
+    const { genres, languages, countries, places, scores, links } = options;
+    const scoresShown = scores.filter((s) => SCORE_NAMES[s]);
+    const [scoresOpen, setScoresOpen] = React.useState(() => scoresShown.some((s) => filters[`score_${s}_min`]));
+    const set = (key) => (value) => setFilters((f) => ({ ...f, [key]: value }));
+    const cycleGenre = (g) => setFilters((f) => {
+        const next = { ...f.genres, [g]: NEXT_GENRE_STATE[f.genres[g]] };
+        if (next[g] === undefined) delete next[g];
+        return { ...f, genres: next };
+    });
+
+    return (
+        <div className={styles['panel']} onKeyDown={keepArrowsInInputs}>
+            {children}
+            <Range label={'Note IMDb'} min={0} max={10} step={0.5} from={filters.rating_min} to={filters.rating_max} onFrom={set('rating_min')} onTo={set('rating_max')} />
+            <Range label={'Année'} min={1900} max={new Date().getFullYear()} step={1} from={filters.year_min} to={filters.year_max} onFrom={set('year_min')} onTo={set('year_max')} />
+            <Range label={'Durée (minutes)'} min={0} max={300} step={5} from={filters.runtime_min} to={filters.runtime_max} onFrom={set('runtime_min')} onTo={set('runtime_max')} />
+            <Choice label={'Nombre de votes'} options={VOTES} value={filters.votes_min} onChange={set('votes_min')} />
+            <Choice label={'Langue originale'} options={choices(languages, languageName, 'Toutes')} value={filters.language} onChange={set('language')} />
+            <Choice label={'Pays'} options={choices(countries, countryName, 'Tous')} value={filters.country} onChange={set('country')} />
+            <Choice label={'Sans ce pays'} options={choices(countries, countryName, 'Aucun exclu')} value={filters.country_not} onChange={set('country_not')} />
+            <Choice label={'Disponible sur'} options={choices(places, AS_IS, 'Peu importe')} value={filters.place} onChange={set('place')} />
+            <Choice label={'Liens trouvés'} options={[{ value: '', label: 'Peu importe' }, ...links.flatMap((l) => [l, `${l}_cached`]).map((value) => ({ value, label: linkName(value) }))]} value={filters.link} onChange={set('link')} />
+            {filters.source !== 'catalog' ? <Choice label={'Tri'} options={SORTS} value={filters.sort} onChange={set('sort')} /> : null}
+            <div className={styles['row']}>
+                {scoresShown.length > 0 ?
+                    <Button className={styles['pill']} aria-expanded={scoresOpen} onClick={() => setScoresOpen(!scoresOpen)}>
+                        {scoresOpen ? TEXTS.hideScores : TEXTS.scores}
+                    </Button>
+                    :
+                    null
+                }
+                {filters.source !== 'catalog' ?
+                    <Button
+                        className={classnames(styles['pill'], { [styles['on']]: filters.known })}
+                        role={'switch'}
+                        aria-checked={filters.known}
+                        title={TEXTS.knownHelp}
+                        onClick={() => setFilters((f) => ({ ...f, known: !f.known }))}
+                    >
+                        {TEXTS.known}
+                    </Button>
+                    :
+                    null
+                }
+            </div>
+            {scoresOpen ? scoresShown.map((s) => <Choice key={s} label={SCORE_NAMES[s]} options={SCORES} value={filters[`score_${s}_min`]} onChange={set(`score_${s}_min`)} />) : null}
+            <div className={classnames(styles['field'], styles['genres'])} role={'group'} aria-label={'Genres'}>
+                <div className={styles['label']}>
+                    {TEXTS.genres}
+                    {GENRE_MODES.map(({ value, label }) => (
+                        <Button key={value} className={classnames(styles['mode'], { [styles['on']]: filters.genres_mode === value })} aria-pressed={filters.genres_mode === value} onClick={() => set('genres_mode')(value)}>
+                            {label}
+                        </Button>
+                    ))}
+                </div>
+                <div className={styles['chips']}>
+                    {genres.map((g) => (
+                        <Button key={g} className={classnames(styles['pill'], styles[filters.genres[g]])} aria-label={`${GENRES[g] || g} : ${GENRE_STATES[filters.genres[g]] || 'indifférent'}`} onClick={() => cycleGenre(g)}>
+                            {GENRES[g] || g}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+FiltersPanel.propTypes = {
+    options: PropTypes.object,
+    filters: PropTypes.object,
+    setFilters: PropTypes.func,
+    children: PropTypes.node,
+};
+
+module.exports = FiltersPanel;
