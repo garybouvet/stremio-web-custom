@@ -237,6 +237,21 @@
         grid-column: 1 / -1;
     }
 
+    .wide {
+        grid-column: span 2;
+    }
+
+    .pair {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 0.5rem;
+        overflow: visible;
+    }
+
+    .chips {
+        margin-top: 0.5rem;
+    }
+
     .row, .chips {
         display: flex;
         flex-wrap: wrap;
@@ -282,6 +297,116 @@
     }
 }
 
+// Pastilles à croix (choix multiples, recherches enregistrées) : ici, car les deux endroits s'en servent.
+.chip {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    height: 2.125rem;
+    border-radius: 2.125rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--primary-foreground-color);
+    background-color: var(--overlay-color);
+    overflow: hidden;
+
+    &.in {
+        color: #ffffff;
+        background-color: var(--primary-accent-color);
+    }
+
+    &.out {
+        box-shadow: inset 0 0 0 1px var(--danger-accent-color);
+        background-color: transparent;
+    }
+
+    .chip-label {
+        .pressable();
+
+        height: 100%;
+        padding: 0 0.5rem 0 0.875rem;
+        line-height: 2.125rem;
+        max-width: 16rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .chip-remove {
+        .pressable();
+
+        display: grid;
+        place-items: center;
+        width: 1.875rem;
+        height: 100%;
+
+        &:hover {
+            background-color: @overlay-hover;
+        }
+
+        .icon {
+            width: 0.625rem;
+            height: 0.625rem;
+            color: inherit;
+        }
+    }
+}
+
+.saved {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+
+    &:empty {
+        display: none;
+    }
+
+    .save {
+        .pressable();
+
+        flex: none;
+        height: 2.125rem;
+        padding: 0 0.875rem;
+        border: none;
+        border-radius: 2.125rem;
+        font: inherit;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: @text-secondary;
+        background-color: transparent;
+        box-shadow: inset 0 0 0 1px var(--overlay-color);
+        cursor: pointer;
+
+        &:hover {
+            color: var(--primary-foreground-color);
+            background-color: var(--overlay-color);
+        }
+    }
+
+    .naming {
+        display: flex;
+        gap: 0.5rem;
+
+        input {
+            width: 16rem;
+            height: 2.125rem;
+            padding: 0 1rem;
+            border: none;
+            border-radius: 2.125rem;
+            font: inherit;
+            font-size: 0.8125rem;
+            color: var(--primary-foreground-color);
+            background-color: var(--overlay-color);
+
+            &:focus-visible {
+                outline: var(--focus-outline-size) solid var(--primary-foreground-color);
+            }
+        }
+    }
+}
+
 // Notes des autres sites, dans l'aperçu.
 .scores {
     display: flex;
@@ -321,6 +446,10 @@
 
     .panel {
         grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+
+        .wide {
+            grid-column: 1 / -1;
+        }
         max-height: none;
         margin: 0;
         padding: 0 1.25rem 1rem;

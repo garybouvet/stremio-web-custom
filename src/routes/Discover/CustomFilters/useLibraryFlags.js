@@ -28,7 +28,11 @@ const useLibraryFlags = (routeActive) => {
         if (routeActive) setItems(read());
     }, [routeActive]);
     const withFlags = React.useCallback((metas) => metas.map((m) => ({ ...m, ...flagsOf(items[m.id]) })), [items]);
-    return { withFlags, refresh };
+    const library = React.useMemo(() => {
+        const ids = (flag) => Object.keys(items).filter((id) => flagsOf(items[id])[flag]).sort();
+        return { watched: ids('watched'), mine: ids('inLibrary') };
+    }, [items]);
+    return { withFlags, refresh, library };
 };
 
 module.exports = { useLibraryFlags, flagsOf };

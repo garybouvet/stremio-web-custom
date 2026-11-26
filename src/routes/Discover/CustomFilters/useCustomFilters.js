@@ -4,69 +4,9 @@
 
 const React = require('react');
 const { useLibraryFlags } = require('./useLibraryFlags');
+const { STORAGE_KEY, DEFAULTS, load, hasCriteria, buildQuery } = require('./query');
 
-const STORAGE_KEY = 'custom_filters';
-const PAGE_SIZE = 50;
 const CINEMETA = 'https://v3-cinemeta.strem.io/manifest.json';
-const FILTRES_ADDON = /\/filtres\/manifest\.json$/;
-const DEFAULTS = {
-    source: 'catalog',
-    rating_min: '', rating_max: '', votes_min: '',
-    year_min: '', year_max: '', runtime_min: '', runtime_max: '',
-    language: '', country: '', country_not: '', place: '', link: '',
-    genres: {},
-    genres_mode: 'all',
-    sort: 'rating',
-    known: true,
-};
-const RANGE_KEYS = ['rating_min', 'rating_max', 'votes_min', 'year_min', 'year_max', 'runtime_min', 'runtime_max', 'language', 'country', 'country_not', 'place', 'link'];
-// Notes d'autres sources (score_tomatoes_min…) : la liste vient du moteur, selon ce qui a été récupéré.
-const keysOf = (f) => RANGE_KEYS.concat(Object.keys(f).filter((k) => k.startsWith('score_')));
-
-const load = () => {
-    try {
-        return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(STORAGE_KEY)) };
-    } catch {
-        return DEFAULTS;
-    }
-};
-
-const hasCriteria = (f) => f.source !== 'catalog' || keysOf(f).some((k) => f[k] !== '') || Object.keys(f.genres).length > 0;
-
-// Tous les catalogues du type affiché, groupés par addon pour garder l'adresse courte. Filtres n'est que l'index IMDb.
-const sourcesOf = (catalogs) => {
-    const sources = {};
-    catalogs.forEach(({ id, deepLinks }) => {
-        // #/discover/<adresse de l'addon>/<type>/<catalogue>?<extra> : stremio-core ne donne l'adresse que dans ce lien.
-        const [path, extra = ''] = deepLinks.discover.split('?');
-        const url = decodeURIComponent(path.split('/')[2]);
-        if (!FILTRES_ADDON.test(url)) sources[url] = (sources[url] || []).concat([[id, extra]]);
-    });
-    return JSON.stringify(sources);
-};
-
-const buildQuery = (f, request, catalogs) => {
-    const q = new URLSearchParams({ type: request.path.type, limit: PAGE_SIZE });
-    keysOf(f).forEach((k) => f[k] !== '' && q.set(k, f[k]));
-    const genres = (state) => Object.keys(f.genres).filter((g) => f.genres[g] === state).join(',');
-    if (genres('in')) q.set(f.genres_mode === 'all' ? 'genres_all' : 'genres_any', genres('in'));
-    if (genres('out')) q.set('genres_none', genres('out'));
-    if (f.source !== 'catalog') {
-        q.set('sort', f.sort);
-        if (f.known) q.set('known', '1');
-    }
-    if (f.source === 'all') {
-        return `api/search?${q}`;
-    }
-    if (f.source === 'sources') {
-        q.set('sources', sourcesOf(catalogs));
-        return `api/sources?${q}`;
-    }
-    q.set('addon', request.base);
-    q.set('catalog', request.path.id);
-    q.set('extra', new URLSearchParams(request.path.extra.filter(([k]) => k !== 'skip')).toString());
-    return `api/catalog?${q}`;
-};
 
 const toMetaItem = (m) => ({
     ...m,
@@ -87,11 +27,11 @@ const toMetaItem = (m) => ({
 const useCustomFilters = (discover, routeActive) => {
     const [filters, setFilters] = React.useState(load);
     const [result, setResult] = React.useState({ items: [], next: null, status: 'Loading', error: null, total: null });
-    const { withFlags, refresh } = useLibraryFlags(routeActive);
+    const { withFlags, refresh, library } = useLibraryFlags(routeActive);
     const request = discover.selected?.request ?? null;
     const supported = request !== null && ['movie', 'series'].includes(request.path.type);
     const active = supported && hasCriteria(filters);
-    const query = active ? buildQuery(filters, request, discover.selectable.catalogs) : null;
+    const query = active ? buildQuery(filters, request, discover.selectable.catalogs, library) : null;
     const requestIdRef = React.useRef(0);
 
     React.useEffect(() => {

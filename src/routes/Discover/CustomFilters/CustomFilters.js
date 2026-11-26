@@ -12,6 +12,7 @@ const { default: BottomSheet } = require('stremio/components/BottomSheet');
 const { default: Button } = require('stremio/components/Button');
 const { default: SegmentedControl } = require('stremio/components/SegmentedControl');
 const FiltersPanel = require('./FiltersPanel');
+const SavedSearches = require('./SavedSearches');
 const { TEXTS, SOURCES, GENRES, summary } = require('./labels');
 const styles = require('./styles');
 
@@ -47,6 +48,7 @@ const CustomFilters = ({ supported, active, filters, setFilters, reset, total })
                 {active && total !== null ? <span className={styles['total']}>{`${total.toLocaleString('fr')} titre${total > 1 ? 's' : ''}`}</span> : null}
                 {active && !open ? <span className={styles['summary']} title={summary(filters)}>{summary(filters)}</span> : null}
             </div>
+            <SavedSearches active={active} filters={filters} setFilters={setFilters} />
             {isMobile ?
                 <BottomSheet show={open} title={TEXTS.filters} closeOnContentClick={false} onCloseRequest={() => setOpen(false)}>
                     <FiltersPanel options={options} filters={filters} setFilters={setFilters} />

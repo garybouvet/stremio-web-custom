@@ -6,6 +6,10 @@ const TEXTS = {
     filters: 'Filtres', reset: 'Réinitialiser', close: 'Fermer les filtres', to: 'à', known: 'Sans les titres confidentiels',
     knownHelp: 'Moins de 100 votes IMDb (10 pour TMDB), et sur aucune plateforme',
     genres: 'Genres (un clic : inclure, deux : exclure)',
+    include: 'Inclure…', exclude: 'Exclure…', without: 'sans ', remove: 'Retirer', switchState: 'Inclure ou exclure',
+    unseen: 'Sans les déjà vus', mine: 'Ma liste seulement', unknownCountry: 'Sans les pays inconnus',
+    unknownHelp: 'Masque les titres dont ni TMDB, ni Wikidata, ni la langue ne donnent le pays',
+    save: '+ Enregistrer cette recherche', saveName: 'Nom de la recherche', ok: 'OK', forget: 'Oublier',
     scores: 'Autres notes : TMDB, Rotten Tomatoes, Metacritic…', hideScores: 'Masquer les autres notes',
 };
 const SOURCES = [['catalog', 'Ce catalogue'], ['sources', 'Toutes les sources'], ['all', 'Tout']].map(([value, label]) => ({ value, label }));
@@ -59,10 +63,11 @@ const summary = (f) => [
     (f.rating_min || f.rating_max) && `Note ${f.rating_min || 0} à ${f.rating_max || 10}`,
     f.votes_min && `${Number(f.votes_min).toLocaleString('fr')} votes et plus`,
     (f.year_min || f.year_max) && `${f.year_min || '…'} à ${f.year_max || '…'}`,
-    f.language && languageName(f.language),
-    f.country && countryName(f.country),
-    f.country_not && `sans ${countryName(f.country_not)}`,
-    f.place,
+    ...[[f.countries, countryName], [f.languages, languageName], [f.places, (p) => p]]
+        .flatMap(([choice, name]) => Object.keys(choice || {}).map((k) => `${choice[k] === 'out' ? 'sans ' : ''}${name(k)}`)),
+    f.unknown_country && Object.keys(f.countries || {}).length > 0 && 'pays connu',
+    f.unseen && 'pas vus',
+    f.mine && 'ma liste',
     f.link && `Liens ${linkName(f.link).toLowerCase()}`,
     ...Object.keys(SCORE_NAMES).filter((s) => f[`score_${s}_min`]).map((s) => `${SCORE_NAMES[s]} ${f[`score_${s}_min`]} et plus`),
     (f.runtime_min || f.runtime_max) && `${f.runtime_min || 0} à ${f.runtime_max || '…'} min`,
