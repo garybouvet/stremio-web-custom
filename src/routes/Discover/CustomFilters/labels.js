@@ -12,10 +12,11 @@ const TEXTS = {
     save: '+ Enregistrer cette recherche', saveName: 'Nom de la recherche', ok: 'OK', forget: 'Oublier',
     scores: 'Autres notes : TMDB, Rotten Tomatoes, Metacritic…', hideScores: 'Masquer les autres notes',
 };
-const SOURCES = [['catalog', 'Ce catalogue'], ['sources', 'Toutes les sources'], ['all', 'Tout']].map(([value, label]) => ({ value, label }));
+const SOURCES = [['catalog', 'Ce catalogue'], ['sources', 'Toutes les sources'], ['all', 'Tout'], ['foryou', 'Pour toi']].map(([value, label]) => ({ value, label }));
 const VOTES = [['', 'Peu importe'], ['1000', '1 000 et plus'], ['10000', '10 000 et plus'], ['50000', '50 000 et plus'], ['100000', '100 000 et plus'], ['500000', '500 000 et plus']]
     .map(([value, label]) => ({ value, label }));
-const SORTS = [['rating', 'Meilleure note'], ['votes', 'Popularité'], ['year', 'Plus récents'], ['year_asc', 'Plus anciens']].map(([value, label]) => ({ value, label }));
+const SORTS = [['rating', 'Meilleure note IMDb'], ['average', 'Moyenne des notes'], ['votes', 'Popularité'], ['year', 'Plus récents'], ['year_asc', 'Plus anciens']]
+    .map(([value, label]) => ({ value, label }));
 const SCORES = [['', 'Peu importe'], ['6', '6 et plus'], ['7', '7 et plus'], ['8', '8 et plus'], ['9', '9 et plus']].map(([value, label]) => ({ value, label }));
 const GENRE_MODES = [['all', 'tous à la fois'], ['any', 'au moins un']].map(([value, label]) => ({ value, label }));
 
@@ -74,4 +75,8 @@ const summary = (f) => [
     ...Object.keys(f.genres).map((g) => `${f.genres[g] === 'out' ? 'sans ' : ''}${GENRES[g] || g}`),
 ].filter(Boolean).join(' · ');
 
-module.exports = { TEXTS, SOURCES, VOTES, SORTS, SCORES, GENRE_MODES, SCORE_NAMES, GENRES, languageName, countryName, linkName, choices, summary };
+// Tri par la note d'un autre site, s'il y en a en base.
+const sortsWith = (scores, source) => (source === 'foryou' ? [{ value: 'foryou', label: 'Pour toi d’abord' }] : [])
+    .concat(SORTS, scores.filter((s) => SCORE_NAMES[s]).map((s) => ({ value: s, label: `Note ${SCORE_NAMES[s]}` })));
+
+module.exports = { TEXTS, SOURCES, VOTES, SORTS, sortsWith, SCORES, GENRE_MODES, SCORE_NAMES, GENRES, languageName, countryName, linkName, choices, summary };

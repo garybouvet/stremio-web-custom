@@ -29,11 +29,14 @@ const useOptions = () => {
     return options;
 };
 
-const CustomFilters = ({ supported, active, filters, setFilters, reset, total }) => {
+const CustomFilters = ({ supported, active, filters, setFilters, reset, total, request }) => {
     const [open, setOpen] = React.useState(false);
     const isMobile = useMediaQuery(`(max-width: ${screenSizes.xsmall})`);
     const options = useOptions();
-    const setSource = React.useCallback((source) => setFilters((f) => ({ ...f, source })), [setFilters]);
+    // « Pour toi » se lit d'abord dans l'ordre des recommandations ; ailleurs, cet ordre n'existe pas.
+    const setSource = React.useCallback((source) => setFilters((f) => ({
+        ...f, source, sort: source === 'foryou' ? 'foryou' : f.sort === 'foryou' ? 'rating' : f.sort,
+    })), [setFilters]);
     if (!supported) return null;
 
     return (
@@ -48,7 +51,7 @@ const CustomFilters = ({ supported, active, filters, setFilters, reset, total })
                 {active && total !== null ? <span className={styles['total']}>{`${total.toLocaleString('fr')} titre${total > 1 ? 's' : ''}`}</span> : null}
                 {active && !open ? <span className={styles['summary']} title={summary(filters)}>{summary(filters)}</span> : null}
             </div>
-            <SavedSearches active={active} filters={filters} setFilters={setFilters} />
+            <SavedSearches active={active} filters={filters} setFilters={setFilters} request={request} />
             {isMobile ?
                 <BottomSheet show={open} title={TEXTS.filters} closeOnContentClick={false} onCloseRequest={() => setOpen(false)}>
                     <FiltersPanel options={options} filters={filters} setFilters={setFilters} />
@@ -74,6 +77,7 @@ CustomFilters.propTypes = {
     setFilters: PropTypes.func,
     reset: PropTypes.func,
     total: PropTypes.number,
+    request: PropTypes.object,
 };
 
 module.exports = CustomFilters;

@@ -12,6 +12,7 @@ const { default: useLiveTvContinueWatching } = require('./useLiveTvContinueWatch
 const { default: Spotlight, Placeholder: SpotlightPlaceholder } = require('./Spotlight');
 const { default: useScrolledPast } = require('./Spotlight/useScrolledPast');
 const styles = require('./styles');
+const { SavedRows } = require('stremio/routes/Discover/CustomFilters');
 const { default: StreamingServerWarning } = require('./StreamingServerWarning');
 const { default: RemoteNotification } = require('stremio/components/RemoteNotification');
 
@@ -92,6 +93,7 @@ const Board = () => {
                             :
                             null
                     }
+                    <SavedRows className={classnames(styles['board-row'], styles['board-row-poster'])} />
                     {catalogRows.map(({ catalog, index }) => {
                         switch (catalog.content?.type) {
                             case 'Ready': {

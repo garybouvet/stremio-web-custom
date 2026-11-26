@@ -18,6 +18,12 @@ describe('filtres du moteur', () => {
             .toEqual(['FR,BE', 'IN', 'hi', ['Prime Video'], ['HBO Max'], 'hide']);
     });
 
+    test('pour toi : titres de départ, du plus récent', () => {
+        const url = buildQuery(normalized({ source: 'foryou', sort: 'foryou' }), request, [], { watched: [], mine: [], recent: ['tt9', 'tt1'] });
+        const q = new URL(url, 'http://x/').searchParams;
+        expect([url.split('?')[0], q.get('seeds'), q.get('sort')]).toEqual(['api/foryou', 'tt9,tt1', 'foryou']);
+    });
+
     test('déjà vus et ma liste', () => {
         expect(params({ unseen: true }).get('exclude_ids')).toBe('tt1,tt2');
         expect(params({ mine: true }).get('only_ids')).toBe('none'); // liste vide : aucun titre

@@ -31,7 +31,10 @@ const useLibraryFlags = (routeActive) => {
     const library = React.useMemo(() => {
         // Films et séries seulement (pas les chaînes TV ni les vidéos) : ce sont les seuls que le moteur connaît.
         const ids = (flag) => Object.keys(items).filter((id) => /^(tt\d+|tmdb:\d+)$/.test(id) && flagsOf(items[id])[flag]).sort();
-        return { watched: ids('watched'), mine: ids('inLibrary') };
+        // Titres de départ de « Pour toi » : vus ou gardés, du plus récent au plus ancien.
+        const when = (id) => Date.parse(items[id].state?.lastWatched || items[id]._mtime || 0) || 0;
+        const recent = [...new Set(ids('watched').concat(ids('inLibrary')))].sort((a, b) => when(b) - when(a));
+        return { watched: ids('watched'), mine: ids('inLibrary'), recent };
     }, [items]);
     return { withFlags, refresh, library };
 };

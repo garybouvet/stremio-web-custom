@@ -8,20 +8,11 @@ const classnames = require('classnames');
 const { default: Icon } = require('@stremio/stremio-icons/react');
 const { default: Button } = require('stremio/components/Button');
 const { normalized } = require('./query');
+const { useSaved } = require('./savedStore');
 const { TEXTS, summary } = require('./labels');
 const styles = require('./styles');
 
-const STORAGE_KEY = 'custom_filters_saved';
 const MAX_NAME = 40;
-
-const read = () => {
-    try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        return Array.isArray(saved) ? saved.filter((s) => typeof s?.name === 'string' && s.filters) : [];
-    } catch {
-        return [];
-    }
-};
 
 // Même recherche, quel que soit l'ordre des clés ou des choix.
 const sameSearch = (a, b) => {
@@ -29,22 +20,15 @@ const sameSearch = (a, b) => {
     return JSON.stringify(stable(normalized(a))) === JSON.stringify(stable(normalized(b)));
 };
 
-const SavedSearches = ({ active, filters, setFilters }) => {
-    const [saved, setSaved] = React.useState(read);
+const SavedSearches = ({ active, filters, setFilters, request }) => {
+    const [saved, keep] = useSaved();
     const [naming, setNaming] = React.useState(null);
-    const keep = (next) => {
-        setSaved(next);
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch {
-            // stockage plein ou indisponible : la liste vaut pour cette session
-        }
-    };
     const current = saved.find((s) => sameSearch(s.filters, filters));
     const save = (event) => {
         event.preventDefault();
         const name = naming.trim().slice(0, MAX_NAME);
-        if (name) keep(saved.filter((s) => s.name !== name).concat([{ name, filters }]));
+        // Le catalogue et le type servent à la rangée de l'accueil : sans eux, elle ne saurait pas quoi lire.
+        if (name) keep(saved.filter((s) => s.name !== name).concat([{ name, filters, type: request?.path.type, request }]));
         setNaming(null);
     };
     if (saved.length === 0 && !active) return null;
@@ -86,6 +70,7 @@ SavedSearches.propTypes = {
     active: PropTypes.bool,
     filters: PropTypes.object,
     setFilters: PropTypes.func,
+    request: PropTypes.object,
 };
 
 module.exports = SavedSearches;

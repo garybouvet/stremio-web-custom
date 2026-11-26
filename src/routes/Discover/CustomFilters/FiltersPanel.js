@@ -8,7 +8,7 @@ const classnames = require('classnames');
 const { default: Button } = require('stremio/components/Button');
 const { default: MultiselectMenu } = require('stremio/components/MultiselectMenu');
 const ChipChoice = require('./ChipChoice');
-const { TEXTS, VOTES, SORTS, SCORES, GENRE_MODES, SCORE_NAMES, GENRES, languageName, countryName, linkName, choices } = require('./labels');
+const { TEXTS, VOTES, sortsWith, SCORES, GENRE_MODES, SCORE_NAMES, GENRES, languageName, countryName, linkName, choices } = require('./labels');
 const styles = require('./styles');
 
 const AS_IS = (name) => name;
@@ -94,7 +94,7 @@ const FiltersPanel = ({ options, filters, setFilters, children }) => {
             <ChipChoice label={'Langue originale'} options={optionsOf(languages, languageName)} value={filters.languages} onChange={set('languages')} />
             <ChipChoice label={'Disponible sur'} options={optionsOf(places, AS_IS)} value={filters.places} onChange={set('places')} />
             <Choice label={'Liens trouvés'} options={[{ value: '', label: 'Peu importe' }, ...links.flatMap((l) => [l, `${l}_cached`]).map((value) => ({ value, label: linkName(value) }))]} value={filters.link} onChange={set('link')} />
-            {filters.source !== 'catalog' ? <Choice label={'Tri'} options={SORTS} value={filters.sort} onChange={set('sort')} /> : null}
+            {filters.source !== 'catalog' ? <Choice label={'Tri'} options={sortsWith(scores, filters.source)} value={filters.sort} onChange={set('sort')} /> : null}
             <div className={styles['row']}>
                 <Switch on={filters.unseen} onClick={() => set('unseen')(!filters.unseen)}>{TEXTS.unseen}</Switch>
                 <Switch on={filters.mine} onClick={() => set('mine')(!filters.mine)}>{TEXTS.mine}</Switch>

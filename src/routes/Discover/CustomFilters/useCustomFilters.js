@@ -5,24 +5,8 @@
 const React = require('react');
 const { useLibraryFlags } = require('./useLibraryFlags');
 const { STORAGE_KEY, DEFAULTS, load, hasCriteria, buildQuery } = require('./query');
-
-const CINEMETA = 'https://v3-cinemeta.strem.io/manifest.json';
-
-const toMetaItem = (m) => ({
-    ...m,
-    posterShape: m.posterShape || 'poster',
-    deepLinks: {
-        metaDetailsVideos: `#/detail/${m.type}/${encodeURIComponent(m.id)}`,
-        metaDetailsStreams: m.type === 'movie' ? `#/detail/${m.type}/${encodeURIComponent(m.id)}/${encodeURIComponent(m.id)}` : null,
-    },
-    // Même forme que les liens préparés par stremio-core (MetaPreview exige l'hôte imdb.com exact).
-    links: (m.imdbRating && m.id.startsWith('tt') ? [{ name: m.imdbRating, category: 'imdb', url: `https://imdb.com/title/${m.id}/` }] : []).concat((m.genres || []).map((g) => ({
-        name: g, category: 'Genres', url: `stremio:///discover/${encodeURIComponent(CINEMETA)}/${m.type}/top?genre=${encodeURIComponent(g)}`,
-    }))),
-    // Bandes-annonces brutes de l'addon : l'interface attend celles préparées par stremio-core (avec deepLinks).
-    trailerStreams: [],
-    released: new Date(NaN),
-});
+const { toMetaItem } = require('./metaItem');
+const { useApplied } = require('./savedStore');
 
 const useCustomFilters = (discover, routeActive) => {
     const [filters, setFilters] = React.useState(load);
@@ -33,6 +17,7 @@ const useCustomFilters = (discover, routeActive) => {
     const active = supported && hasCriteria(filters);
     const query = active ? buildQuery(filters, request, discover.selectable.catalogs, library) : null;
     const requestIdRef = React.useRef(0);
+    useApplied(setFilters);
 
     React.useEffect(() => {
         try {
@@ -84,6 +69,7 @@ const useCustomFilters = (discover, routeActive) => {
     return {
         supported,
         active,
+        request,
         filters,
         setFilters,
         reset: () => setFilters(DEFAULTS),

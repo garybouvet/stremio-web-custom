@@ -61,7 +61,7 @@ const sourcesOf = (catalogs) => {
 const chosen = (choice, state) => Object.keys(choice).filter((k) => choice[k] === state);
 
 // library : { watched: [id], mine: [id] } (bibliothèque Stremio).
-const buildQuery = (f, request, catalogs, library) => {
+const buildQuery = (f, request, catalogs, library = { watched: [], mine: [], recent: [] }) => {
     const q = new URLSearchParams({ type: request.path.type, limit: PAGE_SIZE });
     keysOf(f).forEach((k) => f[k] !== '' && q.set(k, f[k]));
     const list = (key, values) => values.length > 0 && q.set(key, values.join(','));
@@ -80,6 +80,10 @@ const buildQuery = (f, request, catalogs, library) => {
     if (f.source !== 'catalog') {
         q.set('sort', f.sort);
         if (f.known) q.set('known', '1');
+    }
+    if (f.source === 'foryou') {
+        q.set('seeds', library.recent.slice(0, 100).join(','));
+        return `api/foryou?${q}`;
     }
     if (f.source === 'all') {
         return `api/search?${q}`;
