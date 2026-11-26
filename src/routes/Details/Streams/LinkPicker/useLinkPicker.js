@@ -118,6 +118,7 @@ const useLinkPicker = (groups) => {
         verifiable: LOCAL ? probe.pendingCount(readyStreams) : 0,
         verifying: probe.running,
         local: LOCAL,
+        twinHref: known?.twin ? `#/detail/${type}/${known.twin}${videoId ? `/${encodeURIComponent(decodeURIComponent(videoId).replace(id, known.twin))}` : ''}` : null,
     };
 };
 

@@ -5,5 +5,6 @@ const { useCustomFilters } = require('./useCustomFilters');
 const { useTitlePreview } = require('./useTitlePreview');
 const { useLibraryActions } = require('./useLibraryActions');
 const SavedRows = require('./SavedRows');
+const TitleSearchRows = require('./TitleSearchRows');
 
-module.exports = { CustomFilters, useCustomFilters, useTitlePreview, useLibraryActions, SavedRows };
+module.exports = { CustomFilters, useCustomFilters, useTitlePreview, useLibraryActions, SavedRows, TitleSearchRows };

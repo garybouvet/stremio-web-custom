@@ -13,7 +13,10 @@ const styles = require('./LinkPicker.less');
 
 const QUALITIES = [['2160', '4K'], ['1080', '1080p'], ['720', '720p']].map(([value, label]) => ({ value, label }));
 const SIZES = ['5', '10', '20', '40'].map((value) => ({ value, label: `${value} Go au plus` }));
-const TEXTS = { ready: 'Prêts à lire', maybe: 'MULTi et incertains' };
+const TEXTS = {
+    ready: 'Prêts à lire', maybe: 'MULTi et incertains', twin: 'Autre numéro IMDb',
+    twinHelp: 'Ce titre existe aussi sous un autre numéro IMDb ; les sources y ont parfois d’autres liens',
+};
 const VERIFY_HELP = 'Lit les vraies pistes audio et sous-titres des liens Real-Debrid en cache affichés (15 au plus). Comme une lecture, chaque torrent vérifié s’ajoute à ta liste Real-Debrid.';
 
 const Menu = ({ label, any, options, value, onSelect }) => {
@@ -51,7 +54,7 @@ Switch.propTypes = {
     children: PropTypes.node,
 };
 
-const LinkPicker = ({ filter, set, audioOptions, subsOptions, shown, total, verify, verifiable, verifying, local }) => (
+const LinkPicker = ({ filter, set, audioOptions, subsOptions, shown, total, verify, verifiable, verifying, local, twinHref }) => (
     <div className={styles['link-picker']}>
         <div className={styles['menus']}>
             <Menu label={'Audio'} any={'Toutes les langues'} options={audioOptions} value={filter.audio} onSelect={(v) => set('audio', v)} />
@@ -74,6 +77,7 @@ const LinkPicker = ({ filter, set, audioOptions, subsOptions, shown, total, veri
                 null
             }
             {local ? null : <OpenInApp />}
+            {twinHref ? <Button className={styles['switch']} title={TEXTS.twinHelp} href={twinHref}>{TEXTS.twin}</Button> : null}
             <span className={styles['count']}>{`${shown} / ${total} liens`}</span>
         </div>
     </div>
@@ -90,6 +94,7 @@ LinkPicker.propTypes = {
     verifiable: PropTypes.number,
     verifying: PropTypes.shape({ done: PropTypes.number, total: PropTypes.number }),
     local: PropTypes.bool,
+    twinHref: PropTypes.string,
 };
 
 module.exports = LinkPicker;

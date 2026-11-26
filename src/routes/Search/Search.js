@@ -10,6 +10,7 @@ const { Image, MainNavBars, MetaItem, MetaRow } = require('stremio/components');
 const useSearch = require('./useSearch');
 const styles = require('./styles');
 const { useSearchParams } = require('react-router-dom');
+const { TitleSearchRows } = require('stremio/routes/Discover/CustomFilters');
 
 const Search = () => {
     const [queryParams] = useSearchParams();
@@ -70,7 +71,7 @@ const Search = () => {
                                 <div className={styles['message-label']}>{ t.string('STREMIO_TV_SEARCH_NO_ADDONS') }</div>
                             </div>
                             :
-                            catalogRows.map(({ catalog, index }) => {
+                            [<TitleSearchRows key={'titres'} className={classnames(styles['search-row'], styles['search-row-poster'], 'animation-fade-in')} query={query} />].concat(catalogRows.map(({ catalog, index }) => {
                                 switch (catalog.content?.type) {
                                     case 'Ready': {
                                         return (
@@ -106,7 +107,7 @@ const Search = () => {
                                         );
                                     }
                                 }
-                            })
+                            }))
                 }
             </div>
         </MainNavBars>
