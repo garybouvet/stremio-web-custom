@@ -29,7 +29,8 @@ const useLibraryFlags = (routeActive) => {
     }, [routeActive]);
     const withFlags = React.useCallback((metas) => metas.map((m) => ({ ...m, ...flagsOf(items[m.id]) })), [items]);
     const library = React.useMemo(() => {
-        const ids = (flag) => Object.keys(items).filter((id) => flagsOf(items[id])[flag]).sort();
+        // Films et séries seulement (pas les chaînes TV ni les vidéos) : ce sont les seuls que le moteur connaît.
+        const ids = (flag) => Object.keys(items).filter((id) => /^(tt\d+|tmdb:\d+)$/.test(id) && flagsOf(items[id])[flag]).sort();
         return { watched: ids('watched'), mine: ids('inLibrary') };
     }, [items]);
     return { withFlags, refresh, library };
