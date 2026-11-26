@@ -367,6 +367,9 @@
         .pressable();
 
         flex: none;
+        // Le Button de Stremio est un bloc : sans flex, le texte reste collé en haut de la pastille.
+        display: inline-flex;
+        align-items: center;
         height: 2.125rem;
         padding: 0 0.875rem;
         border: none;
@@ -390,7 +393,8 @@
         gap: 0.5rem;
 
         input {
-            width: 16rem;
+            width: 22rem;
+            max-width: 60vw;
             height: 2.125rem;
             padding: 0 1rem;
             border: none;

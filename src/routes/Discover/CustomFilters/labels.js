@@ -59,11 +59,14 @@ const choices = (codes, name, any) => [{ value: '', label: any }].concat(
     codes.slice(FIRST).map((value) => ({ value, label: name(value) })).sort((a, b) => a.label.localeCompare(b.label, 'fr')),
 );
 
+// Intervalle en mots : « depuis 2025 » plutôt que « 2025 à … ».
+const span = (min, max, from, upTo, between) => (min && max ? between(min, max) : min ? from(min) : max ? upTo(max) : null);
+
 // Résumé affiché dans la barre quand le panneau est replié : on garde la place pour les films.
 const summary = (f) => [
-    (f.rating_min || f.rating_max) && `Note ${f.rating_min || 0} à ${f.rating_max || 10}`,
+    span(f.rating_min, f.rating_max, (a) => `Note ${a} et plus`, (b) => `Note ${b} au plus`, (a, b) => `Note ${a} à ${b}`),
     f.votes_min && `${Number(f.votes_min).toLocaleString('fr')} votes et plus`,
-    (f.year_min || f.year_max) && `${f.year_min || '…'} à ${f.year_max || '…'}`,
+    span(f.year_min, f.year_max, (a) => `depuis ${a}`, (b) => `jusqu’à ${b}`, (a, b) => `${a} à ${b}`),
     ...[[f.countries, countryName], [f.languages, languageName], [f.places, (p) => p]]
         .flatMap(([choice, name]) => Object.keys(choice || {}).map((k) => `${choice[k] === 'out' ? 'sans ' : ''}${name(k)}`)),
     f.unknown_country && Object.keys(f.countries || {}).length > 0 && 'pays connu',
@@ -71,12 +74,18 @@ const summary = (f) => [
     f.mine && 'ma liste',
     f.link && `Liens ${linkName(f.link).toLowerCase()}`,
     ...Object.keys(SCORE_NAMES).filter((s) => f[`score_${s}_min`]).map((s) => `${SCORE_NAMES[s]} ${f[`score_${s}_min`]} et plus`),
-    (f.runtime_min || f.runtime_max) && `${f.runtime_min || 0} à ${f.runtime_max || '…'} min`,
+    span(f.runtime_min, f.runtime_max, (a) => `${a} min et plus`, (b) => `${b} min au plus`, (a, b) => `${a} à ${b} min`),
     ...Object.keys(f.genres).map((g) => `${f.genres[g] === 'out' ? 'sans ' : ''}${GENRES[g] || g}`),
 ].filter(Boolean).join(' · ');
+
+// Nom proposé pour une recherche : les premiers éléments du résumé qui tiennent en entier, jamais un mot coupé.
+const shortName = (text, max) => text.split(' · ').reduce((name, part) => {
+    const longer = name ? `${name} · ${part}` : part;
+    return longer.length <= max ? longer : name;
+}, '') || text.slice(0, max);
 
 // Tri par la note d'un autre site, s'il y en a en base.
 const sortsWith = (scores, source) => (source === 'foryou' ? [{ value: 'foryou', label: 'Pour toi d’abord' }] : [])
     .concat(SORTS, scores.filter((s) => SCORE_NAMES[s]).map((s) => ({ value: s, label: `Note ${SCORE_NAMES[s]}` })));
 
-module.exports = { TEXTS, SOURCES, VOTES, SORTS, sortsWith, SCORES, GENRE_MODES, SCORE_NAMES, GENRES, languageName, countryName, linkName, choices, summary };
+module.exports = { TEXTS, SOURCES, VOTES, SORTS, sortsWith, SCORES, GENRE_MODES, SCORE_NAMES, GENRES, languageName, countryName, linkName, choices, summary, shortName };
