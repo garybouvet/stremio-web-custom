@@ -63,21 +63,28 @@ const Actions = ({ className, primary, trailerHref = null, trailers = [], inLibr
                     <div className={styles['secondary']}>
                         {
                             typeof trailerHref === 'string' ?
-                                <Button className={styles['button']} title={t('TRAILER')} aria-label={t('TRAILER')} href={trailerHref}>
-                                    <Icon className={styles['icon']} name={'trailer'} />
-                                    <div className={styles['label']}>{t('TRAILER')}</div>
-                                </Button>
-                                :
-                                null
-                        }
-                        {
-                            trailers.length > 0 ?
-                                <div className={styles['trailer-langs']}>
-                                    {trailers.map((choice) => (
-                                        <Button key={choice.lang} className={styles['trailer-lang']} title={`${t('TRAILER')} ${choice.label}`} href={choice.href}>
-                                            {choice.label}
-                                        </Button>
-                                    ))}
+                                <div className={styles['trailer']}>
+                                    <Button className={styles['button']} title={t('TRAILER')} aria-label={t('TRAILER')} href={trailerHref}>
+                                        <Icon className={styles['icon']} name={'trailer'} />
+                                        <div className={styles['label']}>{t('TRAILER')}</div>
+                                    </Button>
+                                    {
+                                        trailers.length > 0 ?
+                                            <div className={styles['trailer-langs']}>
+                                                {trailers.map((choice) => (
+                                                    <Button
+                                                        key={choice.lang}
+                                                        className={classNames(styles['trailer-lang'], { [styles['current']]: choice.href === trailerHref })}
+                                                        title={`${t('TRAILER')} ${choice.label}`}
+                                                        href={choice.href}
+                                                    >
+                                                        {choice.label}
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                            :
+                                            null
+                                    }
                                 </div>
                                 :
                                 null
