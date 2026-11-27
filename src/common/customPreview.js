@@ -1,12 +1,21 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
 // Fiche d'un titre donnée par le moteur local (api/preview), partagée par Découvrir, la fiche et le choix du lien.
-// Sans moteur ou sans réponse, Stremio garde ses propres données.
+// Résumé et bandes-annonces dans la langue de l'interface de Stremio. Sans moteur ou sans réponse, Stremio garde ses données.
 
 const React = require('react');
+const useProfile = require('./useProfile');
+const interfaceLanguages = require('./interfaceLanguages.json');
 
 const MAX_KEPT = 200;
 const kept = new Map();
+
+// Langue de l'interface (« eng », « fra »…) en code à deux lettres, comme TMDB l'attend.
+const twoLetters = (code) => {
+    const known = interfaceLanguages.find((l) => l.codes.includes(code));
+    const tag = known ? known.codes[0] : code;
+    return typeof tag === 'string' && /^[a-z]{2}(-|$)/i.test(tag) ? tag.slice(0, 2).toLowerCase() : 'en';
+};
 
 // Lien du lecteur comme le fabrique stremio-core : flux en JSON, compressé (zlib), en base64.
 const playerHref = async (stream) => {
@@ -15,18 +24,19 @@ const playerHref = async (stream) => {
     return `#/player/${encodeURIComponent(btoa(String.fromCharCode(...bytes)))}`;
 };
 
-const load = async (type, id) => {
-    const response = await fetch(`api/preview?${new URLSearchParams({ type, id })}`, { headers: { 'X-Stremio-Custom': '1' } });
+const load = async (type, id, lang) => {
+    const response = await fetch(`api/preview?${new URLSearchParams({ type, id, lang })}`, { headers: { 'X-Stremio-Custom': '1' } });
     if (!response.ok) throw new Error(response.status);
     const body = await response.json();
-    return { ...body, trailerHref: body.trailer ? await playerHref({ ytId: body.trailer }) : null };
+    const trailers = await Promise.all((body.trailers || []).map(async (t) => ({ ...t, href: await playerHref({ ytId: t.key }) })));
+    return { ...body, lang, trailers, trailerHref: trailers[0]?.href ?? null };
 };
 
-const getPreview = (type, id) => {
-    const key = `${type}:${id}`;
+const getPreview = (type, id, lang) => {
+    const key = `${type}:${id}:${lang}`;
     if (!kept.has(key)) {
         if (kept.size >= MAX_KEPT) kept.clear();
-        kept.set(key, load(type, id).catch(() => {
+        kept.set(key, load(type, id, lang).catch(() => {
             kept.delete(key);
             return null;
         }));
@@ -35,21 +45,26 @@ const getPreview = (type, id) => {
 };
 
 const useCustomPreview = (type, id, delay = 0) => {
+    const profile = useProfile();
+    const lang = twoLetters(profile.settings?.interfaceLanguage);
     const [preview, setPreview] = React.useState(null);
     React.useEffect(() => {
         let current = true;
         setPreview(null);
         if (!id || !['movie', 'series'].includes(type)) return;
-        const timer = setTimeout(() => getPreview(type, id).then((body) => current && setPreview(body)), delay);
+        const timer = setTimeout(() => getPreview(type, id, lang).then((body) => current && setPreview(body)), delay);
         return () => {
             current = false;
             clearTimeout(timer);
         };
-    }, [type, id, delay]);
+    }, [type, id, delay, lang]);
     return preview;
 };
 
-// Bande-annonce en français si elle existe, sinon celle de Stremio, sinon celle du moteur dans une autre langue.
-const trailerOf = (preview, own) => preview?.trailerLang === 'fr' ? preview.trailerHref : own ?? preview?.trailerHref ?? null;
+// Bande-annonce dans la langue de Stremio si le moteur l'a trouvée, sinon celle de Stremio, sinon une autre du moteur.
+const trailerOf = (preview, own) => preview?.trailers?.find((t) => t.lang === preview.lang)?.href ?? own ?? preview?.trailerHref ?? null;
 
-module.exports = { useCustomPreview, trailerOf };
+// Toutes les langues trouvées (FR, VOSTFR, EN…), pour les pastilles à côté du bouton.
+const trailerChoices = (preview) => preview?.trailers ?? [];
+
+module.exports = { useCustomPreview, trailerOf, trailerChoices, twoLetters };

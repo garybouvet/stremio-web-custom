@@ -26,7 +26,7 @@ import Actions from './Actions';
 import Toolbar from './Actions/Toolbar';
 import Videos from './Videos';
 import type { ScrollMemory } from './Videos';
-import { useCustomPreview, trailerOf } from 'stremio/common/customPreview';
+import { useCustomPreview, trailerOf, trailerChoices } from 'stremio/common/customPreview';
 import Streams from './Streams';
 import Live from './Live';
 import Placeholder from './Placeholder';
@@ -81,7 +81,8 @@ const Details = () => {
     const isLiveMeta = isEpgProvider && metaItem !== null && (metaItem.behaviorHints?.isLive === true || metaItem.type === 'tv');
     const canMarkWatched = video !== null && details.libraryItem?.state.video_id === video.id && details.libraryItem.state.duration > 0;
     const { share } = useMetaLinks(metaItem?.links);
-    const trailerHref = trailerOf(useCustomPreview(type, id), metaItem?.trailerStreams[0]?.deepLinks.player ?? null);
+    const preview = useCustomPreview(type, id);
+    const trailerHref = trailerOf(preview, metaItem?.trailerStreams[0]?.deepLinks.player ?? null);
     const [season, setSeason] = useSeason();
     const actions = useDetailsActions(metaItem, details.libraryItem);
     const primary = usePrimaryAction(metaItem, video, details.libraryItem, details.streams, canMarkWatched);
@@ -208,6 +209,7 @@ const Details = () => {
                                             <Actions
                                                 primary={primary}
                                                 trailerHref={trailerHref}
+                                                trailers={trailerChoices(preview)}
                                                 inLibrary={metaItem.inLibrary}
                                                 onToggleLibrary={actions.toggleLibrary}
                                                 watched={metaItem.watched}

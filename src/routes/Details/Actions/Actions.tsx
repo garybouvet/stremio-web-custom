@@ -29,11 +29,13 @@ type Props = GroupsProps & {
     className?: string,
     primary: PrimaryAction | null,
     trailerHref?: string | null,
+    // Bandes-annonces trouvées par le moteur, une par langue : pastilles FR, VOSTFR, EN… à côté du bouton.
+    trailers?: { lang: string, label: string, href: string }[],
     shareUrl?: string | null,
     toggles?: boolean,
 };
 
-const Actions = ({ className, primary, trailerHref = null, inLibrary, onToggleLibrary, watched, onToggleWatched, ratingInfo = null, shareUrl = null, toggles = true }: Props) => {
+const Actions = ({ className, primary, trailerHref = null, trailers = [], inLibrary, onToggleLibrary, watched, onToggleWatched, ratingInfo = null, shareUrl = null, toggles = true }: Props) => {
     const { t } = useTranslation();
     const [shareOpen, openShare, closeShare] = useBinaryState(false);
     const hasSecondary = typeof trailerHref === 'string' || toggles || typeof shareUrl === 'string';
@@ -65,6 +67,18 @@ const Actions = ({ className, primary, trailerHref = null, inLibrary, onToggleLi
                                     <Icon className={styles['icon']} name={'trailer'} />
                                     <div className={styles['label']}>{t('TRAILER')}</div>
                                 </Button>
+                                :
+                                null
+                        }
+                        {
+                            trailers.length > 0 ?
+                                <div className={styles['trailer-langs']}>
+                                    {trailers.map((choice) => (
+                                        <Button key={choice.lang} className={styles['trailer-lang']} title={`${t('TRAILER')} ${choice.label}`} href={choice.href}>
+                                            {choice.label}
+                                        </Button>
+                                    ))}
+                                </div>
                                 :
                                 null
                         }
