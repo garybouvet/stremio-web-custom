@@ -1,0 +1,73 @@
+// Copyright (C) 2017-2026 Smart code 203358507
+
+// Zu Stremio hinzugefügte Texte (Filter, Linkauswahl…), auf Deutsch. Gleiche Schlüssel wie en.js.
+
+module.exports = {
+    noResults: 'Kein Titel passt zu diesen Filtern',
+    filters: 'Filter', reset: 'Zurücksetzen', close: 'Filter schließen', to: 'bis', minimum: 'Minimum', maximum: 'Maximum',
+    known: 'Unbekannte Titel ausblenden', knownHelp: 'Unter 100 IMDb-Stimmen (10 bei TMDB) und auf keiner Plattform',
+    genres: 'Genres (einmal klicken: einschließen, zweimal: ausschließen)',
+    include: 'Einschließen…', exclude: 'Ausschließen…', without: 'ohne ', remove: 'Entfernen', switchState: 'Einschließen oder ausschließen',
+    unseen: 'Gesehene ausblenden', mine: 'Nur meine Bibliothek', unknownCountry: 'Unbekannte Länder ausblenden',
+    unknownHelp: 'Blendet Titel aus, deren Land weder TMDB noch Wikidata noch die Sprache angibt',
+    save: '+ Diese Suche speichern', saveName: 'Name der Suche', ok: 'OK', forget: 'Vergessen',
+    scores: 'Weitere Bewertungen: TMDB, Rotten Tomatoes, Metacritic…', hideScores: 'Weitere Bewertungen ausblenden',
+    source: 'Quelle', any: 'Egal', atLeast: (n) => `ab ${n}`,
+    titles: (n, shown) => `${shown} Titel`,
+    sources: { catalog: 'Dieser Katalog', sources: 'Alle Quellen', all: 'Alles', foryou: 'Für dich' },
+    sorts: { rating: 'Beste IMDb-Bewertung', average: 'Durchschnittsbewertung', votes: 'Am beliebtesten', year: 'Neueste', year_asc: 'Älteste', foryou: 'Für dich zuerst' },
+    scoreSort: (name) => `${name}-Bewertung`,
+    genreModes: { all: 'alle gleichzeitig', any: 'mindestens eins' },
+    genreStates: { in: 'eingeschlossen', out: 'ausgeschlossen', none: 'egal' },
+    fields: {
+        rating: 'IMDb-Bewertung', year: 'Jahr', runtime: 'Laufzeit (Minuten)', votes: 'Anzahl der Stimmen', countries: 'Land',
+        languages: 'Originalsprache', places: 'Verfügbar auf', links: 'Gefundene Links', sort: 'Sortierung', genres: 'Genres',
+    },
+    scoreNames: {
+        tmdb: 'TMDB', tomatoes: 'Rotten Tomatoes', popcorn: 'Rotten Tomatoes (Publikum)', metacritic: 'Metacritic',
+        metacriticuser: 'Metacritic (Nutzer)', trakt: 'Trakt', letterboxd: 'Letterboxd',
+    },
+    genreNames: {
+        Action: 'Action', Adventure: 'Abenteuer', Animation: 'Animation', Biography: 'Biografie', Comedy: 'Komödie', Crime: 'Krimi',
+        Documentary: 'Dokumentarfilm', Drama: 'Drama', Family: 'Familie', Fantasy: 'Fantasy', 'Film-Noir': 'Film noir',
+        'Game-Show': 'Spielshow', History: 'Geschichte', Horror: 'Horror', Music: 'Musik', Musical: 'Musical',
+        Mystery: 'Mystery', News: 'Nachrichten', 'Reality-TV': 'Reality-TV', Romance: 'Liebesfilm', 'Sci-Fi': 'Science-Fiction',
+        Sport: 'Sport', 'Talk-Show': 'Talkshow', Thriller: 'Thriller', War: 'Kriegsfilm', Western: 'Western',
+    },
+    cached: ', im Cache',
+    summary: {
+        ratingFrom: (a) => `Bewertung ab ${a}`, ratingUpTo: (b) => `Bewertung bis ${b}`, ratingBetween: (a, b) => `Bewertung ${a} bis ${b}`,
+        votes: (n) => `ab ${n} Stimmen`,
+        yearFrom: (a) => `seit ${a}`, yearUpTo: (b) => `bis ${b}`, yearBetween: (a, b) => `${a} bis ${b}`,
+        runtimeFrom: (a) => `ab ${a} Min.`, runtimeUpTo: (b) => `bis ${b} Min.`, runtimeBetween: (a, b) => `${a} bis ${b} Min.`,
+        knownCountry: 'bekanntes Land', unseen: 'nicht gesehen', mine: 'meine Bibliothek', links: (name) => `Links auf ${name}`,
+        score: (name, n) => `${name} ab ${n}`,
+    },
+    searchRows: { movie: 'Filme (lokale und Originaltitel)', series: 'Serien (lokale und Originaltitel)' },
+    links: {
+        audio: 'Audio', subs: 'Untertitel', quality: 'Qualität', size: 'Größe', menuValue: (label, value) => `${label}: ${value}`,
+        anyAudio: 'Alle Sprachen', anySubs: 'Alle Untertitel', anyQuality: 'Alle Qualitäten', anySize: 'Alle Größen',
+        sizeAtMost: (n) => `Bis ${n} GB`, gb: 'GB', mb: 'MB',
+        ready: 'Sofort abspielbar', readyHelp: 'Blendet Links aus, die erst heruntergeladen werden müssen (⏳, [RD download])',
+        maybe: 'MULTi und unsichere', maybeHelp: 'MULTi kann die Sprache enthalten; Flaggen mischen Audio und Untertitel',
+        verify: (n) => `Spuren prüfen (${n})`, verifying: (done, total) => `Prüfe ${done} / ${total}…`,
+        verifyHelp: 'Liest die echten Audio- und Untertitelspuren der angezeigten gecachten Real-Debrid-Links (höchstens 15). Wie beim Abspielen wird jeder geprüfte Torrent deiner Real-Debrid-Liste hinzugefügt.',
+        twin: 'Andere IMDb-ID', twinHelp: 'Dieser Titel existiert auch unter einer anderen IMDb-ID; die Quellen haben dort manchmal andere Links',
+        count: (shown, total) => `${shown} / ${total} Links`,
+        wrong: 'Anderer Titel?', wrongHelp: 'Der Dateiname sieht nicht nach diesem Titel aus',
+        open: 'In Stremio öffnen', openHelp: 'Öffnet diese Seite in der Stremio-App (vollständiger Player)',
+        noneReady: (language) => language ? `Kein Link sofort abspielbar auf ${language}.` : 'Kein Link sofort abspielbar.',
+        relax: {
+            maybe: (n) => `${n} MULTi oder unsichere zeigen`,
+            sizes: (n) => `${n} in anderer Qualität oder Größe zeigen`,
+            languages: (n) => `${n} in anderer Sprache zeigen`,
+            later: (n) => `${n} zum Herunterladen zeigen`,
+        },
+        sections: { ready: 'Sofort abspielbar', later: 'Erst herunterladen', external: 'Auf anderen Seiten' },
+    },
+    badges: {
+        dubbed: (lang) => lang.toUpperCase(),
+        subbed: (lang) => `UT ${lang.toUpperCase()}`,
+        subs: 'UT',
+    },
+};

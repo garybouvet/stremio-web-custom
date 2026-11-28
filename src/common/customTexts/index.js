@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
-// Textes ajoutés à Stremio dans la langue de son interface : français ou anglais, l'anglais pour les autres langues.
+// Textes ajoutés à Stremio dans la langue de son interface : français, anglais, espagnol, portugais, allemand, italien ;
+// l'anglais pour les autres langues.
 // Les noms de pays et de langues ne sont pas ici : Intl.DisplayNames les donne dans toutes les langues.
 
 const React = require('react');
@@ -8,8 +9,12 @@ const { useTranslation } = require('react-i18next');
 const interfaceLanguages = require('../interfaceLanguages.json');
 const fr = require('./fr');
 const en = require('./en');
+const es = require('./es');
+const pt = require('./pt');
+const de = require('./de');
+const it = require('./it');
 
-const DICTIONARIES = { fr, en };
+const DICTIONARIES = { fr, en, es, pt, de, it };
 
 // Langue de l'interface (« eng », « fr-FR »…) en code à deux lettres.
 const twoLetters = (code) => {

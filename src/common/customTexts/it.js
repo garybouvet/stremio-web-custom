@@ -1,0 +1,73 @@
+// Copyright (C) 2017-2026 Smart code 203358507
+
+// Testi aggiunti a Stremio (filtri, scelta del link…), in italiano. Stesse chiavi di en.js.
+
+module.exports = {
+    noResults: 'Nessun titolo corrisponde a questi filtri',
+    filters: 'Filtri', reset: 'Reimposta', close: 'Chiudi i filtri', to: 'a', minimum: 'minimo', maximum: 'massimo',
+    known: 'Nascondi titoli poco noti', knownHelp: 'Meno di 100 voti IMDb (10 per TMDB) e su nessuna piattaforma',
+    genres: 'Generi (un clic: includi, due: escludi)',
+    include: 'Includi…', exclude: 'Escludi…', without: 'senza ', remove: 'Rimuovi', switchState: 'Includi o escludi',
+    unseen: 'Nascondi già visti', mine: 'Solo la mia libreria', unknownCountry: 'Nascondi paesi sconosciuti',
+    unknownHelp: 'Nasconde i titoli il cui paese non è indicato né da TMDB, né da Wikidata, né dalla lingua',
+    save: '+ Salva questa ricerca', saveName: 'Nome della ricerca', ok: 'OK', forget: 'Dimentica',
+    scores: 'Altri voti: TMDB, Rotten Tomatoes, Metacritic…', hideScores: 'Nascondi gli altri voti',
+    source: 'Fonte', any: 'Qualsiasi', atLeast: (n) => `${n} o più`,
+    titles: (n, shown) => `${shown} titol${n === 1 ? 'o' : 'i'}`,
+    sources: { catalog: 'Questo catalogo', sources: 'Tutte le fonti', all: 'Tutto', foryou: 'Per te' },
+    sorts: { rating: 'Miglior voto IMDb', average: 'Voto medio', votes: 'Più popolari', year: 'Più recenti', year_asc: 'Meno recenti', foryou: 'Per te prima' },
+    scoreSort: (name) => `Voto ${name}`,
+    genreModes: { all: 'tutti insieme', any: 'almeno uno' },
+    genreStates: { in: 'incluso', out: 'escluso', none: 'indifferente' },
+    fields: {
+        rating: 'Voto IMDb', year: 'Anno', runtime: 'Durata (minuti)', votes: 'Numero di voti', countries: 'Paese',
+        languages: 'Lingua originale', places: 'Disponibile su', links: 'Link trovati', sort: 'Ordine', genres: 'Generi',
+    },
+    scoreNames: {
+        tmdb: 'TMDB', tomatoes: 'Rotten Tomatoes', popcorn: 'Rotten Tomatoes (pubblico)', metacritic: 'Metacritic',
+        metacriticuser: 'Metacritic (utenti)', trakt: 'Trakt', letterboxd: 'Letterboxd',
+    },
+    genreNames: {
+        Action: 'Azione', Adventure: 'Avventura', Animation: 'Animazione', Biography: 'Biografico', Comedy: 'Commedia', Crime: 'Poliziesco',
+        Documentary: 'Documentario', Drama: 'Drammatico', Family: 'Famiglia', Fantasy: 'Fantasy', 'Film-Noir': 'Noir',
+        'Game-Show': 'Quiz', History: 'Storico', Horror: 'Horror', Music: 'Musica', Musical: 'Musical',
+        Mystery: 'Mistero', News: 'Notizie', 'Reality-TV': 'Reality', Romance: 'Sentimentale', 'Sci-Fi': 'Fantascienza',
+        Sport: 'Sport', 'Talk-Show': 'Talk show', Thriller: 'Thriller', War: 'Guerra', Western: 'Western',
+    },
+    cached: ', in cache',
+    summary: {
+        ratingFrom: (a) => `Voto ${a} o più`, ratingUpTo: (b) => `Voto fino a ${b}`, ratingBetween: (a, b) => `Voto da ${a} a ${b}`,
+        votes: (n) => `${n} voti o più`,
+        yearFrom: (a) => `dal ${a}`, yearUpTo: (b) => `fino al ${b}`, yearBetween: (a, b) => `${a}–${b}`,
+        runtimeFrom: (a) => `${a} min o più`, runtimeUpTo: (b) => `fino a ${b} min`, runtimeBetween: (a, b) => `${a}–${b} min`,
+        knownCountry: 'paese noto', unseen: 'non visti', mine: 'la mia libreria', links: (name) => `Link in ${name}`,
+        score: (name, n) => `${name} ${n} o più`,
+    },
+    searchRows: { movie: 'Film (titoli locali e originali)', series: 'Serie (titoli locali e originali)' },
+    links: {
+        audio: 'Audio', subs: 'Sottotitoli', quality: 'Qualità', size: 'Dimensione', menuValue: (label, value) => `${label}: ${value}`,
+        anyAudio: 'Tutte le lingue', anySubs: 'Tutti i sottotitoli', anyQuality: 'Tutte le qualità', anySize: 'Tutte le dimensioni',
+        sizeAtMost: (n) => `Fino a ${n} GB`, gb: 'GB', mb: 'MB',
+        ready: 'Pronti da guardare', readyHelp: 'Nasconde i link da scaricare prima (⏳, [RD download])',
+        maybe: 'MULTi e incerti', maybeHelp: 'MULTi può contenere la lingua; le bandiere mescolano audio e sottotitoli',
+        verify: (n) => `Verifica tracce (${n})`, verifying: (done, total) => `Verifica ${done} / ${total}…`,
+        verifyHelp: 'Legge le vere tracce audio e sottotitoli dei link Real-Debrid in cache mostrati (15 al massimo). Come quando li guardi, ogni torrent verificato viene aggiunto alla tua lista Real-Debrid.',
+        twin: 'Altro ID IMDb', twinHelp: 'Questo titolo esiste anche con un altro ID IMDb; lì le fonti a volte hanno altri link',
+        count: (shown, total) => `${shown} / ${total} link`,
+        wrong: 'Altro titolo?', wrongHelp: 'Il nome del file non somiglia a questo titolo',
+        open: 'Apri in Stremio', openHelp: 'Apre questa scheda nell’app Stremio (lettore completo)',
+        noneReady: (language) => language ? `Nessun link pronto da guardare in ${language}.` : 'Nessun link pronto da guardare.',
+        relax: {
+            maybe: (n) => `Mostra ${n} MULTi o incerti`,
+            sizes: (n) => `Mostra ${n} con altra qualità o dimensione`,
+            languages: (n) => `Mostra ${n} in un’altra lingua`,
+            later: (n) => `Mostra ${n} da scaricare prima`,
+        },
+        sections: { ready: 'Pronti da guardare', later: 'Da scaricare prima', external: 'Su altri siti' },
+    },
+    badges: {
+        dubbed: (lang) => lang === 'it' ? 'ITA' : lang.toUpperCase(),
+        subbed: (lang) => `SUB ${lang === 'it' ? 'ITA' : lang.toUpperCase()}`,
+        subs: 'SUB',
+    },
+};

@@ -4,6 +4,7 @@ const { labelsFor, shortName } = require('../src/routes/Discover/CustomFilters/l
 const { twoLetters, textsFor } = require('../src/common/customTexts');
 const fr = require('../src/common/customTexts/fr');
 const en = require('../src/common/customTexts/en');
+const others = ['es', 'pt', 'de', 'it'].map((lang) => [lang, require(`../src/common/customTexts/${lang}`)]);
 
 const base = { genres: {}, countries: {}, languages: {}, places: {} };
 
@@ -26,6 +27,14 @@ describe('résumé des filtres', () => {
     });
 });
 
+describe('autres langues', () => {
+    it('traduit le résumé, pays compris', () => {
+        const filters = { ...base, rating_min: '8', countries: { IN: 'out' }, genres: { Comedy: 'in' } };
+        expect(labelsFor('es').summary(filters)).toBe('Nota 8 o más · sin India · Comedia');
+        expect(labelsFor('de').summary(filters)).toBe('Bewertung ab 8 · ohne Indien · Komödie');
+    });
+});
+
 describe('nom proposé pour une recherche enregistrée', () => {
     it('garde les éléments entiers qui tiennent en 40 caractères', () => {
         expect(shortName('Note 8 et plus · depuis 2025 · Comédie · Aventure', 40)).toBe('Note 8 et plus · depuis 2025 · Comédie');
@@ -37,11 +46,13 @@ describe('textes ajoutés', () => {
     it('reconnaît la langue de Stremio et prend l’anglais pour les autres', () => {
         expect(['eng', 'en-US', 'fr-FR', 'fre', 'deu', undefined].map(twoLetters)).toEqual(['en', 'en', 'fr', 'fr', 'de', 'en']);
         expect(textsFor('fr').filters).toBe('Filtres');
-        expect(textsFor('de').filters).toBe('Filters');
+        expect(textsFor('de').filters).toBe('Filter');
+        expect(textsFor('ja').filters).toBe('Filters');
     });
 
-    it('a les mêmes clés en français et en anglais', () => {
+    it('a les mêmes clés dans toutes les langues', () => {
         const keys = (o, prefix = '') => Object.keys(o).flatMap((k) => (o[k] && typeof o[k] === 'object' ? keys(o[k], `${prefix}${k}.`) : [`${prefix}${k}`])).sort();
-        expect(keys(en)).toEqual(keys(fr));
+        expect(keys(fr)).toEqual(keys(en));
+        others.forEach(([, dictionary]) => expect(keys(dictionary)).toEqual(keys(en)));
     });
 });
