@@ -7,6 +7,7 @@ const PropTypes = require('prop-types');
 const classnames = require('classnames');
 const { MetaItem, MetaRow } = require('stremio/components');
 const { normalized, buildQuery } = require('./query');
+const { useCustomTexts } = require('stremio/common/customTexts');
 const { toMetaItem, defaultRequest, discoverHref } = require('./metaItem');
 const { useSaved, apply } = require('./savedStore');
 const { useLibraryFlags } = require('./useLibraryFlags');
@@ -14,9 +15,10 @@ const { useLibraryFlags } = require('./useLibraryFlags');
 const MAX_ROWS = 8;
 
 const SavedRow = ({ className, search, library, withFlags }) => {
+    const { lang } = useCustomTexts();
     const [state, setState] = React.useState({ status: 'Loading', items: [] });
     const request = search.request ?? defaultRequest(search.type ?? 'movie');
-    const query = buildQuery(normalized(search.filters), request, [], library);
+    const query = buildQuery(normalized(search.filters), request, [], library, lang);
     React.useEffect(() => {
         const controller = new AbortController();
         fetch(`${query}&skip=0`, { headers: { 'X-Stremio-Custom': '1' }, signal: controller.signal })

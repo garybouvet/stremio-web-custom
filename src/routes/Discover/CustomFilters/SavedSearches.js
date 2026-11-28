@@ -9,7 +9,7 @@ const { default: Icon } = require('@stremio/stremio-icons/react');
 const { default: Button } = require('stremio/components/Button');
 const { normalized } = require('./query');
 const { useSaved } = require('./savedStore');
-const { TEXTS, summary, shortName } = require('./labels');
+const { useLabels } = require('./labels');
 const styles = require('./styles');
 
 const MAX_NAME = 40;
@@ -21,6 +21,7 @@ const sameSearch = (a, b) => {
 };
 
 const SavedSearches = ({ active, filters, setFilters, request }) => {
+    const { TEXTS, summary, shortName } = useLabels();
     const [saved, keep] = useSaved();
     const [naming, setNaming] = React.useState(null);
     const current = saved.find((s) => sameSearch(s.filters, filters));

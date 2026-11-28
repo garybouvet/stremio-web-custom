@@ -1,6 +1,7 @@
 // Copyright (C) 2017-2026 Smart code 203358507
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCustomTexts } from 'stremio/common/customTexts';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { useGoBack } from 'stremio-router';
@@ -73,10 +74,11 @@ const Streams = ({ streams, video, type, canMarkWatched, title, onBack, onEpisod
     }, [groups, effectiveSelectedAddon]);
 
     const picker = useLinkPicker(visibleGroups);
+    const sectionNames = useCustomTexts().T.links.sections;
     const sections = [
-        { key: 'ready', label: 'Prêts à lire', links: picker.ready },
-        { key: 'later', label: 'À télécharger d’abord', links: picker.later },
-        { key: 'external', label: 'Sur d’autres sites', links: picker.external },
+        { key: 'ready', label: sectionNames.ready, links: picker.ready },
+        { key: 'later', label: sectionNames.later, links: picker.later },
+        { key: 'external', label: sectionNames.external, links: picker.external },
     ].filter(({ links }) => links.length > 0);
 
     const groupsRef = useRef<HTMLDivElement>(null);

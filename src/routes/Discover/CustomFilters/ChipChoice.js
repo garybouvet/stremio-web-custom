@@ -9,10 +9,11 @@ const classnames = require('classnames');
 const { default: Icon } = require('@stremio/stremio-icons/react');
 const { default: Button } = require('stremio/components/Button');
 const { default: MultiselectMenu } = require('stremio/components/MultiselectMenu');
-const { TEXTS } = require('./labels');
+const { useLabels } = require('./labels');
 const styles = require('./styles');
 
 const ChipChoice = ({ label, options, value, onChange }) => {
+    const { TEXTS } = useLabels();
     if (options.length === 0) return null;
     const names = Object.fromEntries(options.map((o) => [o.value, o.label]));
     const free = options.filter((o) => !value[o.value]);

@@ -7,15 +7,17 @@ const { useLibraryFlags } = require('./useLibraryFlags');
 const { STORAGE_KEY, DEFAULTS, load, hasCriteria, buildQuery } = require('./query');
 const { toMetaItem } = require('./metaItem');
 const { useApplied } = require('./savedStore');
+const { useCustomTexts } = require('stremio/common/customTexts');
 
 const useCustomFilters = (discover, routeActive) => {
+    const { T, lang } = useCustomTexts();
     const [filters, setFilters] = React.useState(load);
     const [result, setResult] = React.useState({ items: [], next: null, status: 'Loading', error: null, total: null });
     const { withFlags, refresh, library } = useLibraryFlags(routeActive);
     const request = discover.selected?.request ?? null;
     const supported = request !== null && ['movie', 'series'].includes(request.path.type);
     const active = supported && hasCriteria(filters);
-    const query = active ? buildQuery(filters, request, discover.selectable.catalogs, library) : null;
+    const query = active ? buildQuery(filters, request, discover.selectable.catalogs, library, lang) : null;
     const requestIdRef = React.useRef(0);
     useApplied(setFilters);
 
@@ -62,7 +64,7 @@ const useCustomFilters = (discover, routeActive) => {
         ...discover.catalog,
         installed: true,
         content: result.status === 'Ready' && result.items.length === 0 ?
-            { type: 'Err', content: 'Aucun titre ne correspond à ces filtres' } :
+            { type: 'Err', content: T.noResults } :
             { type: result.status, content: result.status === 'Err' ? result.error : items },
     } : discover.catalog;
 

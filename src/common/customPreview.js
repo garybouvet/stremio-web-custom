@@ -4,18 +4,10 @@
 // Résumé et bandes-annonces dans la langue de l'interface de Stremio. Sans moteur ou sans réponse, Stremio garde ses données.
 
 const React = require('react');
-const useProfile = require('./useProfile');
-const interfaceLanguages = require('./interfaceLanguages.json');
+const { useCustomTexts } = require('./customTexts');
 
 const MAX_KEPT = 200;
 const kept = new Map();
-
-// Langue de l'interface (« eng », « fra »…) en code à deux lettres, comme TMDB l'attend.
-const twoLetters = (code) => {
-    const known = interfaceLanguages.find((l) => l.codes.includes(code));
-    const tag = known ? known.codes[0] : code;
-    return typeof tag === 'string' && /^[a-z]{2}(-|$)/i.test(tag) ? tag.slice(0, 2).toLowerCase() : 'en';
-};
 
 // Lien du lecteur comme le fabrique stremio-core : flux en JSON, compressé (zlib), en base64.
 const playerHref = async (stream) => {
@@ -45,8 +37,7 @@ const getPreview = (type, id, lang) => {
 };
 
 const useCustomPreview = (type, id, delay = 0) => {
-    const profile = useProfile();
-    const lang = twoLetters(profile.settings?.interfaceLanguage);
+    const { lang } = useCustomTexts();
     const [preview, setPreview] = React.useState(null);
     React.useEffect(() => {
         let current = true;
@@ -67,4 +58,4 @@ const trailerOf = (preview, own) => preview?.trailers?.find((t) => t.lang === pr
 // Toutes les langues trouvées (FR, VOSTFR, EN…), pour les pastilles à côté du bouton.
 const trailerChoices = (preview) => preview?.trailers ?? [];
 
-module.exports = { useCustomPreview, trailerOf, trailerChoices, twoLetters };
+module.exports = { useCustomPreview, trailerOf, trailerChoices };

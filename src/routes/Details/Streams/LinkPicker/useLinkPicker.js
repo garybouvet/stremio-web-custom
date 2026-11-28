@@ -8,6 +8,7 @@ const { detect, fromProbe, audioMatch, subsMatch, badge } = require('./streamLan
 const { availability, qualityOf, sizeOf, hdrOf, looksWrong, unique } = require('./streamInfo');
 const { useTrackProbe } = require('./useTrackProbe');
 const { useCustomPreview } = require('stremio/common/customPreview');
+const { useCustomTexts } = require('stremio/common/customTexts');
 
 const STORAGE_KEY = 'stream_language_filter';
 const DEFAULTS = { audio: '', subs: '', includeMaybe: true, quality: '', maxSize: '', readyOnly: true };
@@ -15,8 +16,6 @@ const NOTHING_RELAXED = { maybe: false, later: false, languages: false, sizes: f
 const RANK = { sure: 0, maybe: 1 };
 const NO_MATCH = 9;
 const HEAVY = 40; // Go : au-delà, une copie de disque qui saccade vite ; à qualité égale, après les autres
-const NAMES = new Intl.DisplayNames(['fr'], { type: 'language' });
-const PREFERRED = ['fr', 'en'];
 // Hébergée sur le serveur (iPad, navigateur) : pas de serveur de streaming à côté pour vérifier les pistes.
 const LOCAL = ['127.0.0.1', 'localhost'].includes(window.location.hostname);
 
@@ -28,15 +27,21 @@ const load = () => {
     }
 };
 
-const weight = (code) => PREFERRED.includes(code) ? PREFERRED.indexOf(code) : PREFERRED.length;
-const languageOptions = (codes) => [...codes]
-    .sort((a, b) => (weight(a) - weight(b)) || NAMES.of(a).localeCompare(NAMES.of(b), 'fr'))
-    .map((code) => ({ value: code, label: NAMES.of(code).replace(/^./, (c) => c.toUpperCase()) }));
+// Langue de Stremio puis anglais en tête, le reste par ordre alphabétique dans la langue de Stremio.
+const languageOptions = (codes, names, preferred, lang) => {
+    const weight = (code) => preferred.includes(code) ? preferred.indexOf(code) : preferred.length;
+    return [...codes]
+        .sort((a, b) => (weight(a) - weight(b)) || names.of(a).localeCompare(names.of(b), lang))
+        .map((code) => ({ value: code, label: names.of(code).replace(/^./, (c) => c.toUpperCase()) }));
+};
 
 const better = (x, y) => (Number(x.wrong) - Number(y.wrong)) || (x.rank - y.rank) || (Number(!x.d.verified) - Number(!y.d.verified)) ||
     (y.quality - x.quality) || (Number(x.size > HEAVY) - Number(y.size > HEAVY)) || ((y.size ?? 0) - (x.size ?? 0));
 
 const useLinkPicker = (groups) => {
+    const { lang, T } = useCustomTexts();
+    const names = React.useMemo(() => new Intl.DisplayNames([lang, 'en'], { type: 'language' }), [lang]);
+    const preferred = lang === 'en' ? ['en'] : [lang, 'en'];
     const [filter, setFilter] = React.useState(load);
     const [relaxed, setRelaxed] = React.useState(NOTHING_RELAXED);
     const { type, id, videoId } = useParams();
@@ -64,10 +69,10 @@ const useLinkPicker = (groups) => {
     }), [groups, tracksOf, known]);
 
     const result = React.useMemo(() => {
-        const lang = filter.audio || filter.subs || 'fr';
+        const shownLang = filter.audio || filter.subs || lang;
         const ranked = links.map((link) => ({
             ...link,
-            badge: badge(link.d, lang),
+            badge: badge(link.d, shownLang, T.badges),
             rank: Math.max(
                 filter.audio ? RANK[audioMatch(link.d, filter.audio)] ?? NO_MATCH : 0,
                 filter.subs ? RANK[subsMatch(link.d, filter.subs)] ?? NO_MATCH : 0,
@@ -96,10 +101,10 @@ const useLinkPicker = (groups) => {
                 later: withLater ? 0 : later.length,
             },
         };
-    }, [links, filter, relaxed]);
+    }, [links, filter, relaxed, lang, T]);
 
-    const audioCodes = new Set(PREFERRED);
-    const subsCodes = new Set(PREFERRED);
+    const audioCodes = new Set(preferred);
+    const subsCodes = new Set(preferred);
     links.forEach(({ d }) => {
         [...d.audio, ...d.flags].forEach((c) => audioCodes.add(c));
         [...d.subs, ...d.flags].forEach((c) => subsCodes.add(c));
@@ -111,9 +116,9 @@ const useLinkPicker = (groups) => {
         filter,
         set: (key, value) => setFilter((f) => ({ ...f, [key]: value })),
         relax: (key) => setRelaxed((r) => ({ ...r, [key]: true })),
-        audioOptions: languageOptions(audioCodes),
-        subsOptions: languageOptions(subsCodes),
-        languageName: filter.audio ? NAMES.of(filter.audio) : null,
+        audioOptions: languageOptions(audioCodes, names, preferred, lang),
+        subsOptions: languageOptions(subsCodes, names, preferred, lang),
+        languageName: filter.audio ? names.of(filter.audio) : null,
         verify: () => probe.verify(readyStreams),
         verifiable: LOCAL ? probe.pendingCount(readyStreams) : 0,
         verifying: probe.running,

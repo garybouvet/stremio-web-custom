@@ -7,6 +7,7 @@
 // - Torrentio, drapeaux seuls : le premier est l'audio, les suivants des sous-titres (6 sur 6).
 // sûr = mot explicite ou ligne ci-dessus ; incertain = MULTi sans détail, ou premier drapeau.
 
+const { badges: FRENCH } = require('../../../../common/customTexts/fr');
 const FLAGS = {
     GB: 'en', US: 'en', FR: 'fr', BE: 'fr', CA: 'fr', ES: 'es', MX: 'es', IT: 'it', DE: 'de', PT: 'pt', BR: 'pt',
     JP: 'ja', KR: 'ko', CN: 'zh', TW: 'zh', RU: 'ru', UA: 'uk', PL: 'pl', NL: 'nl', IN: 'hi', TR: 'tr', SA: 'ar',
@@ -96,15 +97,17 @@ const subsMatch = (d, lang) => {
 };
 
 // Étiquette courte affichée sur le lien, pour la langue suivie (fr par défaut).
-const badge = (d, lang = 'fr') => {
+// Mots de l'étiquette (VF, ST… ou SUB…) : ceux de la langue de Stremio, le français par défaut.
+const badge = (d, lang = 'fr', words = FRENCH) => {
+    const tag = lang.toUpperCase();
     if (d.verified) {
         const audio = [...d.audio].map((l) => l.toUpperCase()).join(' ') || '?';
-        return `✓ ${audio}${d.subs.has(lang) ? ` · ST ${lang.toUpperCase()}` : ''}`;
+        return `✓ ${audio}${d.subs.has(lang) ? ` · ${words.subs} ${tag}` : ''}`;
     }
-    if (d.subs.has(lang) && !d.audio.has(lang)) return lang === 'fr' ? 'VOSTFR' : `ST ${lang.toUpperCase()}`;
-    if (d.audio.has(lang)) return lang === 'fr' ? 'VF' : lang.toUpperCase();
+    if (d.subs.has(lang) && !d.audio.has(lang)) return words.subbed(lang);
+    if (d.audio.has(lang)) return words.dubbed(lang);
     if (d.multi) return 'MULTi';
-    if (d.flags.has(lang)) return d.subsHint || lang !== d.first ? `ST ${lang.toUpperCase()} ?` : `${lang.toUpperCase()} ?`;
+    if (d.flags.has(lang)) return d.subsHint || lang !== d.first ? `${words.subs} ${tag} ?` : `${tag} ?`;
     return null;
 };
 

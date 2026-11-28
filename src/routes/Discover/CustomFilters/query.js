@@ -61,8 +61,9 @@ const sourcesOf = (catalogs) => {
 const chosen = (choice, state) => Object.keys(choice).filter((k) => choice[k] === state);
 
 // library : { watched: [id], mine: [id] } (bibliothèque Stremio).
-const buildQuery = (f, request, catalogs, library = { watched: [], mine: [], recent: [] }) => {
-    const q = new URLSearchParams({ type: request.path.type, limit: PAGE_SIZE });
+const buildQuery = (f, request, catalogs, library = { watched: [], mine: [], recent: [] }, lang = 'fr') => {
+    // lang : titres en français si Stremio est en français, sinon ceux d'IMDb.
+    const q = new URLSearchParams({ type: request.path.type, limit: PAGE_SIZE, lang });
     keysOf(f).forEach((k) => f[k] !== '' && q.set(k, f[k]));
     const list = (key, values) => values.length > 0 && q.set(key, values.join(','));
     list(f.genres_mode === 'all' ? 'genres_all' : 'genres_any', chosen(f.genres, 'in'));
